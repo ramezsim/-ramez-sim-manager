@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17366f">
+<title>Ramez SIM Manager</title>
+<style>
+:root{--navy:#17366f;--blue:#2f7de1;--cyan:#2bb8d8;--bg:#f5f7fb;--card:#fff;--text:#182235;--muted:#718096;--line:#e8edf4;--green:#12a36d;--red:#e34d59;--orange:#f0a30a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:'Graphology',-apple-system,BlinkMacSystemFont,"Segoe UI",Tahoma,Arial,sans-serif}
+.top{height:68px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:20}.brand{font-weight:900;font-size:20px;cursor:pointer;user-select:none}.top-actions{display:flex;gap:12px;align-items:center}.iconbtn{border:0;background:transparent;color:#fff;font-size:22px;position:relative;cursor:pointer}
+.wrap{max-width:1000px;margin:auto;padding:18px 14px 50px}.title{display:flex;justify-content:space-between;align-items:center;margin:5px 0 14px}.title h1{margin:0;font-size:27px}.period{display:flex;background:#edf1f7;border-radius:12px;padding:3px;gap:2px}.period button{border:0;background:transparent;padding:9px 12px;border-radius:9px;color:#55657b;font-weight:800}.period button.active{background:#fff;color:var(--blue);box-shadow:0 2px 7px #0000000b}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.card{background:var(--card);border:1px solid #e9eef5;border-radius:20px;padding:17px;box-shadow:0 5px 20px #10204008}.label{color:var(--muted);font-size:13px}.big{font-size:27px;font-weight:900;margin-top:8px}.sub{font-size:12px;color:var(--muted);margin-top:5px}.green{color:var(--green)}.red{color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.panel{background:#fff;border:1px solid #e9eef5;border-radius:20px;padding:17px;box-shadow:0 5px 20px #10204008}.panel h2{font-size:18px;margin:0 0 14px}
+.company{border:1px solid #f0d36a;border-radius:18px;padding:14px;margin:10px 0;background:#fffdf5}.company-head{display:flex;justify-content:space-between;align-items:center}.company-name{font-size:18px;font-weight:900}.company-meta{font-size:12px;color:var(--muted);margin-top:5px}.bar{height:9px;background:#edf1f5;border-radius:99px;overflow:hidden;margin:12px 0 7px}.fill{height:100%;background:linear-gradient(90deg,#f2a600,#ffbd27);border-radius:99px}.company-bottom{display:flex;justify-content:space-between;font-size:12px;color:#66758a}
+.tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin:14px 0}.tab{border:0;background:#fff;border-radius:13px;padding:12px 5px;color:#53657a;font-weight:800;white-space:nowrap}.tab.active{background:var(--navy);color:#fff}
+section.hidden,.hidden{display:none!important}.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}label{font-size:12px;color:#65758a}textarea{resize:vertical}input,select{width:100%;padding:12px;border:1px solid #dce4ed;border-radius:11px;margin-top:5px;background:#fff;font:inherit}button,input,select,textarea{font-family:'Graphology',-apple-system,BlinkMacSystemFont,'Segoe UI',Tahoma,Arial,sans-serif}button{font:inherit}.btn{border:0;border-radius:11px;padding:12px 15px;font-weight:900;cursor:pointer}.primary{background:var(--blue);color:#fff}.success{background:var(--green);color:#fff}.danger{background:var(--red);color:#fff}.light{background:#edf2f7;color:#31445c}.full{grid-column:1/-1}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:11px 7px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{color:#718096}.badge{padding:5px 8px;border-radius:99px;font-size:11px;font-weight:900}.bgreen{background:#e5f8ef;color:#087a52}.bblue{background:#eaf2ff;color:#0757b8}.borange{background:#fff2d5;color:#9b6900}
+.small{font-size:12px;color:var(--muted)}.empty{text-align:center;padding:28px;color:#8a98a9}
+.search{margin-bottom:10px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#182235;color:#fff;padding:12px 18px;border-radius:12px;z-index:100;display:none}
+@media(max-width:760px){.cards{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.title{display:block}.period{margin-top:10px}.tabs{display:flex;overflow-x:auto}.tab{font-size:11px;min-width:88px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}}
+
+@font-face{font-family:'Graphology';src:url('fonts/Graphology-Light.otf') format('opentype');font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('fonts/Graphology-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('fonts/Graphology-Medium.otf') format('opentype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('fonts/Graphology-SemiBold.otf') format('opentype');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('fonts/Graphology-Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('fonts/Graphology-ExtraBold.otf') format('opentype');font-weight:800 900;font-style:normal;font-display:swap}
+
+
+/* Advanced manager additions */
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.section-title h2{margin:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini-card{background:#fff;border:1px solid #e9eef5;border-radius:16px;padding:14px}.mini-card b{display:block;font-size:20px;margin-top:6px}.status-ok{color:var(--green)}.status-warn{color:var(--orange)}.status-danger{color:var(--red)}
+.chart{display:flex;align-items:flex-end;gap:8px;height:190px;padding:14px 4px 0;border-bottom:1px solid var(--line)}.barcol{flex:1;min-width:24px;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:5px}.barcol .barv{background:linear-gradient(180deg,#2f7de1,#2bb8d8);border-radius:8px 8px 2px 2px;min-height:3px}.barcol span{font-size:10px;color:#718096}.search-results .company{margin:8px 0}.muted-box{background:#f7f9fc;border:1px dashed #d9e1ec;border-radius:14px;padding:12px}.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#edf2f7;color:#53657a;font-size:11px;font-weight:800}.danger-text{color:var(--red);font-weight:900}.success-text{color:var(--green);font-weight:900}
+.pin-overlay{position:fixed;inset:0;background:#f5f7fb;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}.pin-box{width:min(420px,100%);background:#fff;border:1px solid #e5eaf2;border-radius:24px;padding:24px;box-shadow:0 20px 60px #10204018;text-align:center}.pin-dots{font-size:28px;letter-spacing:8px;margin:15px 0}.pin-box input{text-align:center;font-size:24px;letter-spacing:8px}.logo-small{width:42px;height:42px;object-fit:contain;border-radius:10px;border:1px solid #e5eaf2;padding:3px;background:#fff}
+@media(max-width:760px){.kpi-grid{grid-template-columns:1fr 1fr}.chart{height:160px}.tabs{grid-template-columns:none}.company-name{font-size:16px}}
+
+
+/* Ramez SIM Liquid Glass redesign */
+:root{--glass:rgba(255,255,255,.62);--glass-strong:rgba(255,255,255,.78);--glass-border:rgba(255,255,255,.62);--shadow:0 18px 50px rgba(24,54,111,.10)}
+body{background:radial-gradient(circle at 10% 0%,#dff5ff 0,transparent 28%),radial-gradient(circle at 95% 15%,#e9e4ff 0,transparent 30%),linear-gradient(135deg,#eef5ff,#f8fbff 45%,#f1f5ff);background-attachment:fixed}
+.top{background:rgba(23,54,111,.72);backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);border-bottom:1px solid rgba(255,255,255,.18);box-shadow:0 10px 30px rgba(23,54,111,.12)}
+.card,.panel,.company,.mini-card{background:var(--glass);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border:1px solid var(--glass-border);box-shadow:var(--shadow)}
+.card:hover,.panel:hover,.company:hover{transform:translateY(-1px);transition:.2s ease}
+.period,.tabs{background:rgba(255,255,255,.38);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.55)}
+.period button.active,.tab.active{background:rgba(23,54,111,.9);box-shadow:0 8px 20px rgba(23,54,111,.18)}
+input,select{background:rgba(255,255,255,.72);backdrop-filter:blur(10px);border-color:rgba(200,213,231,.7)}
+.btn{box-shadow:0 5px 14px rgba(23,54,111,.08)}
+.glass-hero{background:linear-gradient(135deg,rgba(23,54,111,.90),rgba(47,125,225,.78) 55%,rgba(43,184,216,.70));color:#fff;border:1px solid rgba(255,255,255,.28);box-shadow:0 20px 55px rgba(23,54,111,.20);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.glass-chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:7px 11px;display:inline-flex;align-items:center;gap:6px}
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.quick-action{border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.58);border-radius:18px;padding:15px;font-weight:900;cursor:pointer;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}.quick-action small{display:block;color:var(--muted);font-weight:500;margin-top:4px}
+.notice{border-radius:16px;padding:12px;background:rgba(255,244,220,.72);border:1px solid rgba(240,163,10,.25)}
+@media(max-width:760px){.quick-grid{grid-template-columns:1fr 1fr}.glass-hero{border-radius:22px}}
+
+/* Dashboard v2 - cleaner iOS Liquid Glass */
+.top{height:76px;position:sticky;display:flex;align-items:center;justify-content:center;padding:0 16px;background:rgba(22,52,108,.70);box-shadow:0 10px 35px rgba(23,54,111,.14)}
+.brand{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;font-size:21px;letter-spacing:-.3px;white-space:nowrap}.brand span{font-weight:900}
+.top-side{position:absolute;left:16px;display:flex;align-items:center;gap:8px;direction:ltr}.top-spacer{width:120px}
+.header-icon{width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;font-size:19px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.10)}
+.user-pill{display:none}
+.dashboard-head{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin:10px 0 16px}.dashboard-copy{min-width:0}.eyebrow{font-size:10px;letter-spacing:1.4px;font-weight:900;color:#6680a5;margin-bottom:5px;direction:ltr;text-align:right}.dashboard-copy h1{font-size:34px;line-height:1.05;margin:0;font-weight:900;letter-spacing:-1px}.dashboard-copy p{margin:8px 0 0;color:#6d7f98;font-size:13px}.glass-segment{flex:none;padding:5px;border-radius:17px!important;background:rgba(255,255,255,.42)!important;border:1px solid rgba(255,255,255,.72)!important;box-shadow:0 12px 30px rgba(23,54,111,.07)}.period button{padding:10px 14px;border-radius:12px!important;font-size:12px}.period button.active{background:rgba(39,91,160,.92)!important;color:#fff!important;box-shadow:0 7px 18px rgba(39,91,160,.22)!important}
+.dashboard-hero{position:relative;overflow:hidden}.dashboard-hero:before{content:"";position:absolute;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.13);top:-95px;left:-45px;filter:blur(2px)}.dashboard-hero:after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;background:rgba(43,184,216,.18);bottom:-70px;right:12%;filter:blur(4px)}.dashboard-hero>div{position:relative;z-index:1}
+.dashboard-kpis .card{min-height:112px;border-radius:22px;padding:16px 17px;position:relative;overflow:hidden}.dashboard-kpis .card:after{content:"";position:absolute;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.22);left:-18px;bottom:-22px}.dashboard-kpis .label{font-size:12px}.dashboard-kpis .big{font-size:28px}
+.quick-grid{margin-top:14px;gap:9px}.quick-action{min-height:74px;border-radius:20px;background:rgba(255,255,255,.52);box-shadow:0 10px 24px rgba(23,54,111,.06);transition:transform .18s ease,box-shadow .18s ease}.quick-action:active{transform:scale(.98)}
+.grid2{gap:12px;margin-top:14px}.panel{border-radius:24px}.panel h2{font-size:17px}
+@media(max-width:760px){.top{height:70px}.brand{font-size:19px}.header-icon{width:40px;height:40px}.dashboard-head{display:block;margin-top:8px}.dashboard-copy h1{font-size:31px}.dashboard-copy p{font-size:12px}.glass-segment{margin-top:13px;width:100%;display:flex}.period button{flex:1;padding:10px 7px}.dashboard-hero{padding:18px!important}.dashboard-hero .glass-chip{font-size:11px}.dashboard-kpis{gap:9px}.dashboard-kpis .card{min-height:105px;padding:14px}.dashboard-kpis .big{font-size:25px}.quick-action{min-height:78px;padding:12px 9px;font-size:13px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-side">
+    <button class="header-icon" onclick="tab('settings',document.querySelectorAll('.tab')[6])" aria-label="الإعدادات">⚙️</button>
+    <span id="currentUserBadge" class="user-pill"></span>
+  </div>
+  <div class="brand" onclick="goHome()" role="button" tabindex="0" aria-label="الرئيسية">📱 <span>Ramez SIM</span></div>
+  <div class="top-spacer"></div>
+</header>
+
+<main class="wrap">
+  <div class="dashboard-head">
+    <div class="dashboard-copy">
+      <div class="eyebrow">RAMEZ SIM • DASHBOARD</div>
+      <h1>لوحة التحكم</h1>
+      <p>كل المبيعات، الدفعات، التجديدات والأرباح في مكان واحد.</p>
+    </div>
+    <div class="period glass-segment">
+      <button class="active" onclick="setPeriod('all',this)">الكل</button>
+      <button onclick="setPeriod('today',this)">اليوم</button>
+      <button onclick="setPeriod('month',this)">هذا الشهر</button>
+      <button onclick="setPeriod('custom',this)">مخصص</button>
+    </div>
+  </div>
+
+  <div id="customDate" class="panel hidden" style="margin-bottom:12px">
+    <div class="formgrid"><div><label>من</label><input id="fromDate" type="date" onchange="renderAll()"></div><div><label>إلى</label><input id="toDate" type="date" onchange="renderAll()"></div></div>
+  </div>
+
+  <div class="glass-hero dashboard-hero" style="border-radius:28px;padding:20px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div style="font-size:13px;opacity:.82">لوحة Ramez SIM</div><div style="font-size:28px;font-weight:900;margin-top:3px">إدارة شغلك من مكان واحد</div><div style="opacity:.84;margin-top:5px">بيع، تجديد، دفعات، ديون وتقارير بدون لف ودوران.</div></div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap"><span class="glass-chip">⚡ عمل اليوم</span><span class="glass-chip">💳 دفعات</span><span class="glass-chip">🔄 تجديدات</span></div>
+    </div>
+  </div>
+  <div class="quick-grid">
+    <button class="quick-action" onclick="openQuickSell()">💰 بيع سريع<small>تسجيل بيع خلال ثوانٍ</small></button>
+    <button class="quick-action" onclick="openQuickRenew()">🔄 تجديد سريع<small>تجديد خط موجود</small></button>
+    <button class="quick-action" onclick="tab('dailyTab',document.querySelectorAll('.tab')[9])">📋 عمل اليوم<small>كل ما يحتاج متابعة</small></button>
+    <button class="quick-action" onclick="tab('toolsTab',document.querySelectorAll('.tab')[10])">🧰 أدوات<small>استرداد أرقام وتنبيهات التجديد</small></button>
+  </div>
+
+  <div class="cards dashboard-kpis" style="margin-top:14px">
+    <div class="card"><div class="label">🏢 الشركات</div><div class="big" id="cCompanies">0</div></div>
+    <div class="card"><div class="label">🔄 العمليات</div><div class="big" id="cOps">0</div></div>
+    <div class="card"><div class="label">📱 الشرائح الجديدة</div><div class="big" id="cNew">0</div><div class="sub" id="cRenew">0 تجديد</div></div>
+    <div class="card"><div class="label">💰 إجمالي المبيعات</div><div class="big" id="cSales">₪0</div></div>
+    <div class="card"><div class="label">📈 إجمالي الأرباح</div><div class="big green" id="cProfit">₪0</div></div><div class="card"><div class="label">📦 المتوفر بالمخزون</div><div class="big" id="cStock">0</div></div>
+  </div>
+
+  <div class="grid2">
+    <div class="panel"><h2>🏢 رصيد الشركات</h2><div id="companies"></div></div>
+    <div class="panel"><h2>⏰ التجديدات القادمة</h2><div id="upcomingRenewals"></div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="goHome()">الرئيسية</button>
+    <button class="tab" onclick="tab('sims',this)">الشرائح</button>
+    <button class="tab" onclick="tab('add',this)">➕ إضافة</button>
+    <button class="tab" onclick="tab('reports',this)">📊 التقارير</button>
+    <button class="tab" onclick="tab('customers',this)">👤 الزبائن</button>
+    <button class="tab" onclick="tab('companiesTab',this)">🏢 الشركات</button>
+    <button class="tab" onclick="tab('settings',this)">⚙️ الإعدادات</button>
+    <button class="tab" onclick="tab('renewals',this)">🔄 التجديدات</button>
+    <button class="tab" onclick="tab('searchTab',this)">🔎 بحث</button>
+    <button class="tab" onclick="tab('dailyTab',this)">⚡ اليوم</button>
+    <button class="tab" onclick="tab('toolsTab',this)">🧰 أدوات</button>
+    <button class="tab" onclick="tab('renewalImportsTab',this)">🔢 استرداد أرقام</button>
+  </div>
+
+  <section id="dashboard"></section>
+
+  <section id="sims" class="hidden">
+    <div class="panel"><h2>📱 إدارة الشرائح والعمليات</h2>
+      <input class="search" id="search" placeholder="ابحث برقم الشريحة..." oninput="renderSims()">
+      <div class="tablewrap"><table><thead><tr><th>الرقم</th><th>الشركة</th><th>الجملة</th><th>العمليات</th><th>آخر حالة</th><th>إجراء</th></tr></thead><tbody id="simTable"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="add" class="hidden">
+    <div class="panel"><h2>➕ إضافة شريحة</h2>
+      <div class="formgrid">
+        <div><label>رقم الشريحة / الخط</label><input id="phone" inputmode="numeric" placeholder="0535983511"></div>
+        <div><label>الشركة</label><select id="company" onchange="updateWholesale()"></select></div>
+        <div><label>سعر الجملة (₪)</label><input id="wholesale" type="number" step=".01"></div>
+        <div><label>سعر البيع الافتراضي (₪)</label><input id="salePrice" type="number" step=".01"></div>
+        <div class="full"><button class="btn primary" onclick="addSim()">إضافة الشريحة</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reports" class="hidden">
+    <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px"><h2 style="margin:0">📊 التقارير</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn primary" onclick="printReport()">🖨️ طباعة التقرير</button>
+        <button class="btn light" onclick="exportData()">💾 نسخة احتياطية</button><button class="btn light" onclick="exportCSV('sales')">📤 CSV</button>
+      </div>
+      <div id="report"></div>
+    </div>
+  </section>
+
+
+  <section id="customers" class="hidden">
+    <div class="panel">
+      <h2>👤 حسابات الزبائن</h2>
+      <input class="search" id="customerSearch" placeholder="ابحث باسم الزبون أو رقمه..." oninput="renderCustomers()">
+      <div id="customerList"></div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px"><h2 style="margin:0">📄 كشف حساب</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <div id="customerStatement"><div class="empty">اختر زبونًا من القائمة لعرض كشف الحساب</div></div>
+    </div>
+  </section>
+
+  <section id="companiesTab" class="hidden">
+    <div class="panel"><h2>🏢 إدارة الشركات</h2>
+      <div class="formgrid">
+        <div><label>اسم الشركة</label><input id="newCompany" placeholder="مثال: سكاي"></div>
+        <div><label>سعر الجملة الافتراضي (₪)</label><input id="defaultPrice" type="number" step=".01"></div>
+        <div class="full"><button class="btn primary" onclick="addCompany()">إضافة شركة</button></div>
+      </div>
+      <div id="companyList"></div>
+    </div>
+  </section>
+
+
+  <section id="renewals" class="hidden">
+    <div class="panel">
+      <div class="section-title"><h2>🔄 التجديدات القادمة</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <div class="formgrid">
+        <div><label>عرض خلال</label><select id="renewalWindow" onchange="renderRenewals()"><option value="7">7 أيام</option><option value="14">14 يوم</option><option value="30" selected>30 يوم</option><option value="all">كل المواعيد</option></select></div>
+        <div><label>بحث</label><input id="renewalSearch" placeholder="رقم أو عميل" oninput="renderRenewals()"></div>
+      </div>
+      <div id="renewalList" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section id="searchTab" class="hidden">
+    <div class="panel">
+      <div class="section-title"><h2>🔎 البحث الشامل</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <input class="search" id="globalSearch" placeholder="رقم الخط، اسم العميل، رقم الهاتف، الشركة..." oninput="renderGlobalSearch()">
+      <div id="globalResults" class="search-results"></div>
+    </div>
+  </section>
+
+
+  <section id="dailyTab" class="hidden">
+    <div class="panel">
+      <div class="section-title"><h2>⚡ عمل اليوم</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <div id="dailyOverview"></div>
+    </div>
+    <div class="panel" style="margin-top:14px"><h2>🕵️ آخر النشاطات</h2><div id="activityList"></div></div>
+  </section>
+
+  <section id="renewalImportsTab" class="hidden">
+    <div class="panel">
+      <div class="section-title">
+        <h2>🔢 استرداد أرقام</h2>
+        <button class="btn light" onclick="goHome()">← الرئيسية</button>
+      </div>
+      <div class="muted-box" style="margin-bottom:12px">
+        <b>📥 استرداد أرقام التجديد</b>
+        <div class="small" style="margin-top:5px">اختر الشركة ثم ارفع ملف Excel أو CSV. سيتم حفظ الأرقام في قائمة التجديدات فقط، بدون تعديل المخزون أو المبيعات.</div>
+      </div>
+      <div class="formgrid">
+        <div>
+          <label>الشركة</label>
+          <select id="renewalImportCompany"></select>
+        </div>
+        <div style="display:flex;align-items:end">
+          <button class="btn primary" style="width:100%" onclick="document.getElementById('renewalImportFile').click()">📥 اختيار ملف Excel / CSV</button>
+        </div>
+      </div>
+      <input id="renewalImportFile" type="file" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none" onchange="previewRenewalImport(event)">
+      <div id="renewalImportStatus" class="small" style="margin:10px 0"></div>
+      <div id="renewalImportPreview"></div>
+    </div>
+
+    <div class="panel" style="margin-top:14px">
+      <div class="section-title">
+        <h2>📋 الأرقام المستردة</h2>
+        <span class="pill" id="renewalImportCount">0</span>
+      </div>
+      <div class="formgrid">
+        <div><label>بحث</label><input id="renewalImportSearch" class="search" placeholder="رقم الهاتف أو اسم الزبون..." oninput="renderRenewalImports()"></div>
+        <div><label>الشركة</label><select id="renewalImportFilter" onchange="renderRenewalImports()"><option value="all">كل الشركات</option></select></div>
+      </div>
+      <div id="renewalImportsList"></div>
+    </div>
+  </section>
+
+  <section id="toolsTab" class="hidden">
+    <div class="panel">
+      <div class="section-title"><h2>🧰 أدوات الإدارة</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <div class="quick-grid" style="margin-top:0">
+        <button class="quick-action" onclick="tab('renewalImportsTab',document.querySelectorAll('.tab')[11])">🔢 استرداد أرقام<small>استرداد ملفات التجديد لكل الشركات</small></button>
+        <button class="quick-action" onclick="openRenewalAlerts()">📲 تنبيهات التجديد<small>إرسال واتساب للأرقام القريبة من الانتهاء</small></button>
+        <button class="quick-action" onclick="document.getElementById('exportTools').scrollIntoView({behavior:'smooth'})">📤 تصدير البيانات<small>عملاء، مبيعات، دفعات وخطوط CSV</small></button>
+        <button class="quick-action" onclick="document.getElementById('compareTools').scrollIntoView({behavior:'smooth'})">📊 مقارنة الفترات<small>مقارنة المبيعات والأرباح</small></button>
+      </div>
+    </div>
+
+    <div class="panel" id="renewalAlerts" style="margin-top:14px">
+      <div class="section-title"><h2>📲 تنبيهات التجديد</h2><span class="pill" id="renewalAlertCount">0</span></div>
+      <div class="formgrid">
+        <div><label>الشركة</label><select id="alertCompany" onchange="renderRenewalAlerts()"><option value="all">كل الشركات</option></select></div>
+        <div><label>تنتهي خلال</label><select id="alertWindow" onchange="renderRenewalAlerts()"><option value="1">يوم واحد</option><option value="3">3 أيام</option><option value="7" selected>7 أيام</option><option value="15">15 يوم</option><option value="30">30 يوم</option><option value="all">كل الأرقام</option></select></div>
+      </div>
+      <div class="muted-box" style="margin-top:10px">
+        <label>رسالة التجديد</label>
+        <textarea id="renewalAlertMessage" rows="3" style="width:100%;margin-top:5px;border:1px solid #dce4ed;border-radius:11px;padding:12px;font:inherit">مرحبًا {name}، نذكّرك بأن تجديد الخط {phone} يقترب بتاريخ {date}. للتجديد تواصل معنا. شكرًا لك.</textarea>
+        <div class="small" style="margin-top:6px">المتغيرات: {name} · {phone} · {date} · {days} · {company}</div>
+      </div>
+      <div id="renewalAlertsList" style="margin-top:12px"></div>
+    </div>
+
+    <div class="panel" id="exportTools" style="margin-top:14px"><h2>📤 تصدير البيانات</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" onclick="exportCSV('customers')">👤 عملاء CSV</button><button class="btn primary" onclick="exportCSV('sales')">💰 مبيعات CSV</button><button class="btn primary" onclick="exportCSV('payments')">💳 دفعات CSV</button><button class="btn primary" onclick="exportCSV('sims')">📱 خطوط CSV</button></div></div>
+    <div class="panel" id="compareTools" style="margin-top:14px"><h2>📈 مقارنة الفترات</h2><div class="formgrid"><div><label>الفترة الأولى من</label><input id="cmpFrom1" type="date"></div><div><label>إلى</label><input id="cmpTo1" type="date"></div><div><label>الفترة الثانية من</label><input id="cmpFrom2" type="date"></div><div><label>إلى</label><input id="cmpTo2" type="date"></div><div class="full"><button class="btn primary" onclick="comparePeriods()">📊 عرض المقارنة</button></div></div><div id="comparisonResult" style="margin-top:12px"></div></div>
+  </section>
+
+  <section id="settings" class="hidden">
+    <div class="panel"><h2>⚙️ إعدادات النظام</h2>
+      <div class="formgrid">
+        <div><label>اسم المتجر في الكشف</label><input id="storeName" placeholder="Ramez SIM Manager" onchange="saveSettings()"></div>
+        <div><label>رقم واتساب</label><input id="storeWhatsApp" inputmode="tel" placeholder="9705xxxxxxxx" onchange="saveSettings()"></div>
+        <div><label>رمز القفل PIN (اختياري)</label><input id="pinSetting" inputmode="numeric" maxlength="6" placeholder="اتركه فارغًا لإلغاء القفل" onchange="saveSettings()"></div>
+        <div><label>القفل التلقائي</label><select id="autoLock" onchange="saveSettings()"><option value="0">مغلق</option><option value="5">بعد 5 دقائق</option><option value="15">بعد 15 دقيقة</option><option value="30">بعد 30 دقيقة</option></select></div>
+        <div><label>المستخدم الحالي</label><select id="activeUser" onchange="setActiveUser()"></select></div>
+        <div><label>اسم مستخدم جديد</label><input id="newUserName" placeholder="مثال: أحمد"></div>
+        <div><label>الصلاحية</label><select id="newUserRole"><option>موظف</option><option>مدير</option></select></div>
+        <div style="display:flex;align-items:end"><button class="btn primary" style="width:100%" onclick="addUser()">➕ إضافة مستخدم</button></div>
+      </div>
+      <div class="muted-box" style="margin-top:12px"><b>👥 المستخدمون</b><div id="userList" style="margin-top:8px"></div></div>
+      <div class="muted-box" style="margin-top:12px">💾 النسخ الاحتياطي محفوظ محليًا على جهازك. استخدم التصدير بانتظام، خصوصًا قبل أي تحديث.</div>
+    </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px"><h2 style="margin:0">⚙️ الإعدادات والنسخ الاحتياطي</h2><button class="btn light" onclick="goHome()">← الرئيسية</button></div>
+      <div class="company" style="border-color:#dfe7f2;background:#fff">
+        <div class="company-name">💾 حماية بياناتك</div>
+        <div class="company-meta">صدّر نسخة JSON قبل أي تعديل كبير، واستوردها لاحقًا لاسترجاع البيانات على نفس الموقع. النسخة الاحتياطية لا تُحفظ داخل الموقع حفاظًا على خصوصية بيانات العملاء.</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn primary" onclick="exportData()">⬇️ تصدير نسخة احتياطية</button>
+          <button class="btn success" onclick="chooseBackupFile()">⬆️ استيراد نسخة احتياطية</button>
+        </div>
+        <input id="backupFile" type="file" accept=".json,application/json" style="display:none" onchange="importBackupFile(event)">
+        <div class="small" style="margin-top:10px">الاستيراد لا يستبدل بياناتك إلا بعد ظهور رسالة تأكيد.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='ramez_sim_manager_v2';
+let period='all';
+let data=JSON.parse(localStorage.getItem(KEY)||'null')||{
+ companies:[{id:1,name:'سكاي',price:45},{id:2,name:'ليان',price:50},{id:3,name:'أرين',price:40},{id:4,name:'الوها',price:45}],
+ sims:[]
+};
+
+function normalize(){
+ data.companies ||= [];
+ data.sims ||= [];
+ data.customerPayments ||= []; data.customerProfiles ||= {}; data.users ||= [{id:1,name:'رامز',role:'مدير'}]; data.currentUserId ||= 1; data.settings ||= {storeName:'Ramez SIM Manager',storeWhatsApp:'',pin:'',autoLock:0,waRenewTpl:'',waStatementTpl:'',waWelcomeTpl:''};
+ data.expenses ||= []; data.activity ||= []; data.invoiceSeq ||= 1; data.skyRenewals ||= [];
+ data.sims.forEach(s=>{
+   s.wholesale=Number(s.wholesale||0); s.salePrice=Number(s.salePrice||0); s.companyId=Number(s.companyId||0); s.notes=s.notes||''; s.nextRenewal=s.nextRenewal||''; s.status=s.status||'available'; s.history=Array.isArray(s.history)?s.history:[];
+   s.history ||= [];
+   if(!s.history.length && s.status==='sold' && s.soldAt) s.history.push({type:'بيع',price:s.salePrice,wholesale:s.wholesale,date:s.soldAt});
+ });
+}
+normalize();
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function money(n){return '₪'+Number(n||0).toLocaleString('he-IL',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function companyName(id){return data.companies.find(c=>c.id==id)?.name||'-'}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function nowDate(){return new Date().toISOString()}
+function inPeriod(date){
+ if(!date)return false; let d=new Date(date), now=new Date();
+ if(period==='all')return true;
+ if(period==='today')return d.toDateString()===now.toDateString();
+ if(period==='month')return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+ let f=document.getElementById('fromDate')?.value,t=document.getElementById('toDate')?.value;
+ if(f&&d<new Date(f+'T00:00:00'))return false;
+ if(t&&d>new Date(t+'T23:59:59'))return false;
+ return true;
+}
+function allOps(){
+ let a=[];data.sims.forEach(s=>(s.history||[]).forEach((h,i)=>a.push({...h,simId:s.id,phone:s.phone,companyId:s.companyId,opIndex:i})));return a;
+}
+function ops(){return allOps().filter(o=>inPeriod(o.date))}
+function setPeriod(p,b){period=p;document.querySelectorAll('.period button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById('customDate').classList.toggle('hidden',p!=='custom');renderAll()}
+
+function goHome(){
+ document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));
+ const home=document.getElementById('dashboard');
+ if(home)home.classList.remove('hidden');
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+ const first=document.querySelector('.tab');
+ if(first)first.classList.add('active');
+ window.scrollTo({top:0,behavior:'smooth'});
+ renderAll();
+}
+
+function tab(id,b){document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderAll()}
+
+function companyLogo(name){
+ const n=String(name||'').trim();
+ if(n==='ليان') return 'logos/layan.jpg';
+ if(n==='سكاي') return 'logos/sky.jpg';
+ if(n==='الوها') return 'logos/aloha.jpg';
+ if(n==='أرين') return 'logos/areen.jpg';
+ return '';
+}
+function companyLogoHtml(c){
+ const src=companyLogo(c.name);
+ return src ? `<img src="${src}" alt="${esc(c.name)}" style="width:52px;height:52px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #e5eaf2;padding:4px;flex:none">` : `<div style="width:52px;height:52px;border-radius:12px;background:#f2f5f9;display:flex;align-items:center;justify-content:center;font-weight:800;color:#5d6b82">${esc((c.name||'?').slice(0,1))}</div>`;
+}
+function renderDashboard(){
+ let o=ops(),sales=o.reduce((a,x)=>a+Number(x.price||0),0),profit=o.reduce((a,x)=>a+Number(x.price||0)-Number(x.wholesale||0),0);
+ document.getElementById('cCompanies').textContent=data.companies.length;
+ document.getElementById('cOps').textContent=o.length;
+ document.getElementById('cNew').textContent=o.filter(x=>x.type==='بيع').length;
+ document.getElementById('cRenew').textContent=o.filter(x=>x.type==='تجديد').length+' تجديد';
+ document.getElementById('cSales').textContent=money(sales);
+ document.getElementById('cProfit').textContent=money(profit); document.getElementById('cStock').textContent=data.sims.filter(s=>s.status==='available').length;
+
+ document.getElementById('companies').innerHTML=data.companies.map(c=>{
+   let co=o.filter(x=>x.companyId==c.id),used=co.reduce((a,x)=>a+x.price,0);
+   let stock=data.sims.filter(s=>s.companyId==c.id&&s.status==='available').length;
+   let limit=Math.max(used+500,1),pct=Math.min(100,Math.round(used/limit*100));
+   return `<div class="company"><div class="company-head"><div style="display:flex;align-items:center;gap:10px">${companyLogoHtml(c)}<div class="company-name">${esc(c.name)}</div></div><b>${money(used)}</b></div><div class="bar"><div class="fill" style="width:${pct}%"></div></div><div class="company-bottom"><span>المخزون: ${stock}</span><span>العمليات: ${co.length}</span></div></div>`
+ }).join('')||'<div class="empty">لا توجد شركات</div>';
+ const up=document.getElementById('upcomingRenewals'); if(up){const arr=renewalRecords().slice(0,5);up.innerHTML=arr.length?arr.map(x=>`<div class="muted-box" style="margin:7px 0"><b>${esc(x.s.phone)}</b> · ${esc(x.s.customerName||'غير مسمى')}<br><span class="small">📅 ${esc(x.s.nextRenewal)} · ${x.diff===0?'اليوم':'بعد '+x.diff+' يوم'}</span></div>`).join(''):'<div class="empty">لا توجد مواعيد مسجلة</div>';}
+
+}
+function populateCompanies(){document.getElementById('company').innerHTML=data.companies.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');updateWholesale()}
+function updateWholesale(){let c=data.companies.find(x=>x.id==document.getElementById('company').value);if(c)document.getElementById('wholesale').value=c.price}
+function addCompany(){let n=document.getElementById('newCompany').value.trim(),p=Number(document.getElementById('defaultPrice').value||0);if(!n)return alert('اكتب اسم الشركة');data.companies.push({id:Date.now(),name:n,price:p});document.getElementById('newCompany').value='';save();alert('تمت إضافة الشركة')}
+function addSim(){
+ let phone=document.getElementById('phone').value.trim(),cid=Number(document.getElementById('company').value),w=Number(document.getElementById('wholesale').value),sp=Number(document.getElementById('salePrice').value||0);
+ if(!phone)return alert('اكتب رقم الشريحة');
+ let existing=data.sims.find(s=>s.phone===phone);
+ if(existing)return alert('الرقم موجود أصلًا. استخدم زر "تجديد" لتسجيل عملية جديدة على نفس الرقم.');
+ data.sims.push({id:Date.now(),phone,companyId:cid,wholesale:w,salePrice:sp,status:'available',createdAt:nowDate(),history:[]});
+ document.getElementById('phone').value='';document.getElementById('salePrice').value='';logActivity(`إضافة الخط ${phone} · ${companyName(cid)}`,'مخزون');save();alert('تمت إضافة الشريحة')
+}
+function sellSim(id,type='بيع'){
+ let s=data.sims.find(x=>x.id==id);if(!s)return;
+ let price=prompt(type==='تجديد'?'سعر التجديد (₪)؟':'سعر البيع (₪)؟',s.salePrice||'');if(price===null)return;
+ price=Number(price);if(!price)return alert('أدخل سعر صحيح');
+ let customerName=prompt('اسم الزبون؟',s.customerName||'');if(customerName===null)return;
+ customerName=customerName.trim()||'زبون غير مسمى';
+ let customerPhone=prompt('رقم الزبون (اختياري)؟',s.customerPhone||'');if(customerPhone===null)return;
+ let paid=prompt('المبلغ المدفوع الآن (₪)؟',String(price));if(paid===null)return;
+ paid=Math.max(0,Number(paid)||0); if(paid>price) paid=price;
+ let nextRenewal=prompt('موعد التجديد القادم (YYYY-MM-DD)؟',s.nextRenewal||'');if(nextRenewal===null)return;
+ let note=prompt('ملاحظة على العملية (اختياري)؟',s.notes||'');if(note===null)return;
+ let discount=prompt('الخصم (₪)؟','0');if(discount===null)return; discount=Math.max(0,Number(discount)||0);
+ let extra=prompt('مصاريف/عمولة على العملية (₪)؟','0');if(extra===null)return; extra=Math.max(0,Number(extra)||0);
+ let date=nowDate(),invoice='INV-'+new Date().getFullYear()+'-'+String(data.invoiceSeq++).padStart(6,'0');
+ s.salePrice=price;s.status='sold';s.soldAt=date;s.customerName=customerName;s.customerPhone=customerPhone.trim();s.nextRenewal=nextRenewal.trim();s.notes=note.trim();
+ s.history.push({type,price,wholesale:s.wholesale,date,customerName,customerPhone:s.customerPhone,paid,nextRenewal:s.nextRenewal,note:s.notes,operator:currentUser().name,discount,expense:extra,invoice});
+ logActivity(`${type} ${s.phone} · ${customerName} · ${money(Math.max(0,price-discount))}`,'عملية'); save();
+ notify(`${type==='تجديد'?'🔄 تم تسجيل التجديد':'💰 تم تسجيل البيع'} للرقم ${s.phone}`);
+}
+function renewSim(id){sellSim(id,'تجديد')}
+function renderSims(){
+ let q=(document.getElementById('search')?.value||'').trim(),rows=data.sims.filter(s=>s.phone.includes(q));
+ document.getElementById('simTable').innerHTML=rows.length?rows.map(s=>{
+   let count=s.history?.length||0,last=s.history?.at(-1),due=last?Number(last.price||0)-Number(last.paid||0):0;
+   let status=due>0?'غير مكتمل':(last?'مدفوع':'متوفرة');
+   return `<tr><td>${esc(s.phone)}</td><td>${esc(companyName(s.companyId))}</td><td>${money(s.wholesale)}</td><td>${count}</td><td><span class="badge ${due>0?'borange':(s.status==='sold'?'bblue':'bgreen')}">${esc(status)}</span></td><td>${s.status==='available'?`<button class="btn success" style="padding:7px 9px" onclick="sellSim(${s.id})">بيع</button>`:`<button class="btn primary" style="padding:7px 9px" onclick="renewSim(${s.id})">تجديد</button>`} <button class="btn light" style="padding:7px 9px" onclick="historySim(${s.id})">السجل</button> <button class="btn light" style="padding:7px 9px" onclick="editSimMeta(${s.id})">📝 ملاحظات</button> <button class="btn light" style="padding:7px 9px" onclick="changeSimStatus(${s.id})">⚙️ حالة</button></td></tr>`
+ }).join(''):'<tr><td colspan="6" class="empty">لا توجد شرائح</td></tr>'
+}
+function historySim(id){
+ let s=data.sims.find(x=>x.id==id),h=s?.history||[];
+ alert(h.length?`سجل ${s.phone}\n\n`+h.map((x,i)=>`${i+1}. ${x.type} | ${x.customerName||'غير مسمى'} | ${new Date(x.date).toLocaleString('ar')}\nالمبلغ: ${money(x.price)} | المدفوع: ${money(x.paid||0)} | المتبقي: ${money((x.price||0)-(x.paid||0))} | الربح: ${money(x.price-x.wholesale)}`).join('\n\n'):'لا توجد عمليات لهذا الرقم');
+}
+
+function customerRecords(){
+ let map={};
+ allOps().forEach(o=>{
+   let name=(o.customerName||'زبون غير مسمى').trim(), phone=(o.customerPhone||'').trim();
+   let key=(name.toLowerCase()+'|'+phone);
+   if(!map[key])map[key]={key,name,phone,ops:[],paid:0,note:data.customerProfiles[key]?.note||''};
+   map[key].ops.push(o);
+   map[key].paid+=Number(o.paid||0);
+ });
+ (data.customerPayments||[]).forEach(p=>{
+   let key=(p.customerName||'').trim().toLowerCase()+'|'+(p.customerPhone||'').trim();
+   if(!map[key])map[key]={key,name:p.customerName||'زبون',phone:p.customerPhone||'',ops:[],paid:0,note:data.customerProfiles[key]?.note||''};
+   map[key].paid+=Number(p.amount||0);
+ });
+ return Object.values(map).map(c=>{
+   c.total=c.ops.reduce((a,o)=>a+Number(o.price||0),0);
+   c.due=Math.max(0,c.total-c.paid);
+   return c;
+ });
+}
+function renderCustomers(){
+ let q=(document.getElementById('customerSearch')?.value||'').trim().toLowerCase();
+ let cs=customerRecords().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(q));
+ document.getElementById('customerList').innerHTML=cs.length?cs.map(c=>`
+   <div class="company" style="border-color:#dfe7f2;background:#fff">
+    <div class="company-head"><div><div class="company-name">${esc(c.name)}</div><div class="company-meta">${esc(c.phone||'لا يوجد رقم')} · ${c.ops.length} عملية</div></div>
+    <div style="text-align:left"><b class="${c.due?'red':''}">${money(c.due)}</b><div class="small">المتبقي</div></div></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn primary" style="padding:8px 11px" onclick="showStatement('${encodeURIComponent(c.key)}')">كشف الحساب</button>
+      ${c.due>0?`<button class="btn success" style="padding:8px 11px" onclick="addPayment('${encodeURIComponent(c.key)}')">💵 تسجيل دفعة</button>`:''}<button class="btn light" style="padding:8px 11px" onclick="editCustomerNote('${encodeURIComponent(c.key)}')">📝 ملاحظة</button>
+    </div>
+   </div>`).join(''):'<div class="empty">لا يوجد زبائن مطابقون</div>';
+}
+function getCustomer(key){
+ return customerRecords().find(c=>c.key===decodeURIComponent(key));
+}
+function showStatement(key){
+ let c=getCustomer(key);if(!c)return;
+ let html=`<div id="statementPrint"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><div><h3 style="margin:0">${esc(c.name)}</h3><div class="small">${esc(c.phone||'لا يوجد رقم')}</div></div><b>${money(c.due)} متبقي</b></div>${c.note?`<div class="muted-box" style="margin-top:10px">📝 ${esc(c.note)}</div>`:''}
+ <div class="tablewrap" style="margin-top:12px"><table><thead><tr><th>التاريخ</th><th>الرقم</th><th>البيان</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>`;
+ c.ops.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(o=>{
+   let due=Math.max(0,Number(o.price)-Number(o.paid||0));
+   html+=`<tr><td>${new Date(o.date).toLocaleDateString('ar')}</td><td>${esc(o.phone)}</td><td>${esc(o.type)}</td><td>${money(o.price)}</td><td>${money(o.paid||0)}</td><td>${money(due)}</td></tr>`;
+ });
+ (data.customerPayments||[]).filter(p=>(p.customerName+'|'+(p.customerPhone||'')).trim().toLowerCase()===c.key).forEach(p=>{
+   html+=`<tr><td>${new Date(p.date).toLocaleDateString('ar')}</td><td>-</td><td>دفعة على الحساب</td><td>-${money(p.amount)}</td><td>${money(p.amount)}</td><td>-</td></tr>`;
+ });
+ html+=`</tbody></table></div><div class="muted-box" style="margin-top:12px"><b>💳 سجل الدفعات</b><div style="margin-top:7px">${(data.customerPayments||[]).filter(p=>((p.customerName||'').trim().toLowerCase()+'|'+(p.customerPhone||'').trim())===c.key).sort((a,b)=>new Date(b.date)-new Date(a.date)).map(p=>`<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)"><span>${money(p.amount)} · ${new Date(p.date).toLocaleDateString('ar')} ${p.operator?`· ${esc(p.operator)}`:''}</span><span><button class="btn light" style="padding:5px 8px" onclick="editPayment(${p.id},'${encodeURIComponent(c.key)}')">تعديل</button> <button class="btn danger" style="padding:5px 8px" onclick="deletePayment(${p.id},'${encodeURIComponent(c.key)}')">حذف</button></span></div>`).join('')||'<span class="small">لا توجد دفعات منفصلة</span>'}</div></div><div class="cards" style="margin-top:12px"><div class="card"><div class="label">إجمالي الخدمات</div><div class="big">${money(c.total)}</div></div><div class="card"><div class="label">إجمالي المدفوع</div><div class="big">${money(c.paid)}</div></div><div class="card"><div class="label">المتبقي</div><div class="big red">${money(c.due)}</div></div></div></div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn primary" onclick="printCustomer('${encodeURIComponent(c.key)}')">🖨️ طباعة كشف الحساب</button><button class="btn" onclick="showStatementImage('${encodeURIComponent(c.key)}')">🖼️ كشف كصورة</button><button class="btn light" onclick="printReceipt('${encodeURIComponent(c.key)}')">🧾 إيصال</button>${c.due>0?`<button class="btn success" onclick="addPayment('${encodeURIComponent(c.key)}')">💵 تسجيل دفعة</button>`:''}</div>`;
+ document.getElementById('customerStatement').innerHTML=html;
+}
+function addPayment(key){
+ let c=getCustomer(key);if(!c)return;
+ let amount=prompt(`المبلغ المدفوع من ${c.name} (₪)؟`,c.due.toFixed(2));if(amount===null)return;
+ amount=Math.max(0,Number(amount)||0);if(!amount)return alert('أدخل مبلغًا صحيحًا');if(amount>c.due)amount=c.due;
+ let paymentNote=prompt('ملاحظة الدفعة (اختياري)؟','')||'';
+ data.customerPayments.push({id:Date.now(),customerName:c.name,customerPhone:c.phone,amount,date:nowDate(),operator:currentUser().name,note:paymentNote});
+ save();showStatement(key);notify(`💵 تم تسجيل دفعة ${money(amount)} من ${c.name}`);
+}
+
+function editPayment(id,key){const p=(data.customerPayments||[]).find(x=>x.id==id);if(!p)return;let a=prompt('تعديل مبلغ الدفعة (₪)؟',String(p.amount));if(a===null)return;a=Number(a);if(!a||a<0)return alert('مبلغ غير صحيح');let n=prompt('تعديل ملاحظة الدفعة؟',p.note||'');if(n===null)return;p.amount=a;p.note=n;save();showStatement(key);}
+function deletePayment(id,key){const p=(data.customerPayments||[]).find(x=>x.id==id);if(!p)return;if(!confirm(`حذف دفعة ${money(p.amount)}؟`))return;data.customerPayments=data.customerPayments.filter(x=>x.id!=id);save();showStatement(key);notify('🗑️ تم حذف الدفعة');}
+function buildStatementRows(c){
+ const rows=(c.ops||[]).slice().sort((a,b)=>new Date(a.date)-new Date(b.date)).map(o=>({date:new Date(o.date||Date.now()).toLocaleDateString('en-CA'),num:o.phone||'-',desc:o.type||'عملية',amount:Number(o.price||0),paid:Number(o.paid||0),due:Math.max(0,Number(o.price||0)-Number(o.paid||0))}));
+ const payments=(data.customerPayments||[]).filter(p=>((p.customerName||'').trim().toLowerCase()+'|'+(p.customerPhone||'').trim())===c.key).map(p=>({date:new Date(p.date||Date.now()).toLocaleDateString('en-CA'),num:'-',desc:'دفعة على الحساب',amount:-Number(p.amount||0),paid:Number(p.amount||0),due:0}));
+ return rows.concat(payments);
+}
+function showStatementImage(key){
+ const c=getCustomer(key); if(!c)return;
+ const rows=buildStatementRows(c);
+ const payload={name:c.name||'',phone:c.phone||'',rows,total:Number(c.total||0),paid:Number(c.paid||0),due:Number(c.due||0),storeName:data.settings?.storeName||'Ramez SIM Manager'};
+ const svg=statementSVG(payload);
+ const overlay=document.createElement('div'); overlay.id='statementImageOverlay';
+ overlay.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:12px"><div style="background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:94vh;overflow:auto;padding:12px;direction:rtl;box-shadow:0 18px 60px rgba(0,0,0,.3)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px"><b style="font-size:18px">🖼️ كشف الحساب كصورة</b><button onclick="document.getElementById(\'statementImageOverlay\').remove()" style="border:0;background:#edf2f7;border-radius:10px;padding:8px 12px;font-weight:800">✕</button></div><div style="background:#f6f8fb;border-radius:12px;padding:8px;overflow:auto"><img id="statementPreviewImg" style="width:100%;height:auto;border:1px solid #e5e7eb;border-radius:10px;display:block;background:#fff"/></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button onclick="downloadStatementImage()" style="flex:1;min-width:140px;border:0;border-radius:12px;padding:13px;background:#2f7de1;color:#fff;font-weight:800;font-size:15px">⬇️ حفظ الصورة</button><button onclick="shareStatementToWhatsApp()" style="flex:1;min-width:140px;border:0;border-radius:12px;padding:13px;background:#12a36d;color:#fff;font-weight:800;font-size:15px">💬 إرسال إلى واتساب</button></div><p style="font-size:12px;color:#718096;text-align:center;margin:9px 0 2px">الصورة كاملة بدون قص، ومناسبة للمشاركة على واتساب.</p></div></div>';
+ document.body.appendChild(overlay);
+ window.__statementImageSVG=svg;
+ const img=overlay.querySelector('#statementPreviewImg'); img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+function statementSVG(d){
+ const esc=x=>String(x??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+ const W=1080, M=45, tableW=W-M*2, rowH=68, headerH=225, totalH=220, H=Math.max(700,headerH+64+(d.rows.length*rowH)+totalH);
+ const cols={date:M+155,num:M+380,desc:M+600,amount:M+755,paid:M+910,due:M+990};
+ let y=headerH+64;
+ let rows=d.rows.map(r=>{const yy=y;y+=rowH;return `<line x1="${M}" y1="${yy+24}" x2="${W-M}" y2="${yy+24}" stroke="#e5e7eb"/><text x="${cols.date}" y="${yy}" text-anchor="end" class="cell">${esc(r.date)}</text><text x="${cols.num}" y="${yy}" text-anchor="end" class="cell">${esc(r.num)}</text><text x="${cols.desc}" y="${yy}" text-anchor="end" class="cell">${esc(r.desc)}</text><text x="${cols.amount}" y="${yy}" text-anchor="end" class="cell">${money(r.amount)}</text><text x="${cols.paid}" y="${yy}" text-anchor="end" class="cell">${money(r.paid)}</text><text x="${cols.due}" y="${yy}" text-anchor="end" class="cell">${money(r.due)}</text>`}).join('');
+ const tableTop=headerH, bottom=headerH+64+d.rows.length*rowH;
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><rect width="100%" height="100%" fill="#ffffff"/><rect x="0" y="0" width="${W}" height="12" fill="#17366f"/><style>.title{font-family:Arial,sans-serif;font-size:38px;font-weight:800;fill:#17366f}.sub{font-family:Arial,sans-serif;font-size:28px;font-weight:700;fill:#182235}.small{font-family:Arial,sans-serif;font-size:22px;fill:#718096}.head{font-family:Arial,sans-serif;font-size:19px;font-weight:800;fill:#31445c}.cell{font-family:Arial,sans-serif;font-size:18px;fill:#182235}.tot{font-family:Arial,sans-serif;font-size:25px;font-weight:700;fill:#182235}
+/* Advanced manager additions */
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.section-title h2{margin:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini-card{background:#fff;border:1px solid #e9eef5;border-radius:16px;padding:14px}.mini-card b{display:block;font-size:20px;margin-top:6px}.status-ok{color:var(--green)}.status-warn{color:var(--orange)}.status-danger{color:var(--red)}
+.chart{display:flex;align-items:flex-end;gap:8px;height:190px;padding:14px 4px 0;border-bottom:1px solid var(--line)}.barcol{flex:1;min-width:24px;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:5px}.barcol .barv{background:linear-gradient(180deg,#2f7de1,#2bb8d8);border-radius:8px 8px 2px 2px;min-height:3px}.barcol span{font-size:10px;color:#718096}.search-results .company{margin:8px 0}.muted-box{background:#f7f9fc;border:1px dashed #d9e1ec;border-radius:14px;padding:12px}.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#edf2f7;color:#53657a;font-size:11px;font-weight:800}.danger-text{color:var(--red);font-weight:900}.success-text{color:var(--green);font-weight:900}
+.pin-overlay{position:fixed;inset:0;background:#f5f7fb;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}.pin-box{width:min(420px,100%);background:#fff;border:1px solid #e5eaf2;border-radius:24px;padding:24px;box-shadow:0 20px 60px #10204018;text-align:center}.pin-dots{font-size:28px;letter-spacing:8px;margin:15px 0}.pin-box input{text-align:center;font-size:24px;letter-spacing:8px}.logo-small{width:42px;height:42px;object-fit:contain;border-radius:10px;border:1px solid #e5eaf2;padding:3px;background:#fff}
+@media(max-width:760px){.kpi-grid{grid-template-columns:1fr 1fr}.chart{height:160px}.tabs{grid-template-columns:none}.company-name{font-size:16px}}
+</style><text x="${W-M}" y="66" text-anchor="end" class="title">${esc(d.storeName||'Ramez SIM Manager')}</text><text x="${W-M}" y="110" text-anchor="end" class="sub">كشف حساب الزبون</text><text x="${W-M}" y="150" text-anchor="end" class="small">${esc(d.name)} ${esc(d.phone)}</text><rect x="${M}" y="${tableTop}" width="${tableW}" height="58" rx="10" fill="#f2f5f9"/><text x="${cols.date}" y="${tableTop+36}" text-anchor="end" class="head">التاريخ</text><text x="${cols.num}" y="${tableTop+36}" text-anchor="end" class="head">الرقم</text><text x="${cols.desc}" y="${tableTop+36}" text-anchor="end" class="head">البيان</text><text x="${cols.amount}" y="${tableTop+36}" text-anchor="end" class="head">المبلغ</text><text x="${cols.paid}" y="${tableTop+36}" text-anchor="end" class="head">المدفوع</text><text x="${cols.due}" y="${tableTop+36}" text-anchor="end" class="head">المتبقي</text>${rows}<line x1="${M}" y1="${bottom+18}" x2="${W-M}" y2="${bottom+18}" stroke="#d1d5db" stroke-width="2"/><text x="${W-M}" y="${bottom+70}" text-anchor="end" class="tot">إجمالي الخدمات: ${money(d.total)}</text><text x="${W-M}" y="${bottom+116}" text-anchor="end" class="tot">إجمالي المدفوع: ${money(d.paid)}</text><text x="${W-M}" y="${bottom+162}" text-anchor="end" class="tot">المتبقي: ${money(d.due)}</text><text x="${W/2}" y="${H-20}" text-anchor="middle" class="small">Ramez SIM</text></svg>`;
+}
+async function svgToPngBlob(svg){
+ return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>{const scale=2;const c=document.createElement('canvas');c.width=1080*scale;c.height=Math.ceil(img.height*scale);const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);c.toBlob(b=>b?resolve(b):reject(new Error('blob')),'image/png',.95)};img.onerror=reject;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);});
+}
+async function downloadStatementImage(){try{const b=await svgToPngBlob(window.__statementImageSVG);const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='كشف-حساب.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)}catch(e){alert('تعذر إنشاء الصورة. حاول مرة أخرى.')}}
+async function shareStatementToWhatsApp(){try{const b=await svgToPngBlob(window.__statementImageSVG);const f=new File([b],'كشف-حساب.png',{type:'image/png'});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[f]}))){await navigator.share({files:[f],text:'كشف حساب من Ramez SIM'});}else{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='كشف-حساب.png';a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);window.open('https://wa.me/?text='+encodeURIComponent('كشف حساب من Ramez SIM'),'_blank')},500)}}catch(e){if(e.name!=='AbortError')alert('تعذر إرسال الصورة. استخدم حفظ الصورة ثم شاركها عبر واتساب.')}}
+
+function printCustomer(key){
+ let c=getCustomer(key);if(!c)return;
+ let rows=buildStatementRows(c).map(o=>`<tr><td>${esc(o.date)}</td><td>${esc(o.num)}</td><td>${esc(o.desc)}</td><td>${money(o.amount)}</td><td>${money(o.paid)}</td><td>${money(o.due)}</td></tr>`).join('');
+ const pdfSvg=statementSVG({name:c.name||'',phone:c.phone||'',rows:buildStatementRows(c),total:Number(c.total||0),paid:Number(c.paid||0),due:Number(c.due||0)});
+ printWindow(`كشف حساب - ${c.name}`,`<h1>Ramez SIM Manager</h1><h2>كشف حساب الزبون</h2><p><b>${esc(c.name)}</b> ${esc(c.phone||'')}</p><table><thead><tr><th>التاريخ</th><th>الرقم</th><th>البيان</th><th>المبلغ</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>${rows}</tbody></table><div class="totals">إجمالي الخدمات: ${money(c.total)}<br>إجمالي المدفوع: ${money(c.paid)}<br><b>المتبقي: ${money(c.due)}</b></div>`,pdfSvg);
+}
+function printReport(){
+ let o=ops(),sales=o.reduce((a,x)=>a+x.price,0),cost=o.reduce((a,x)=>a+x.wholesale,0),profit=sales-cost;
+ let rows=o.sort((a,b)=>new Date(a.date)-new Date(b.date)).map(x=>`<tr><td>${new Date(x.date).toLocaleDateString('ar')}</td><td>${esc(x.phone)}</td><td>${esc(companyName(x.companyId))}</td><td>${esc(x.type)}</td><td>${money(x.price)}</td><td>${money(x.price-x.wholesale)}</td></tr>`).join('');
+ printWindow('تقرير المبيعات',`<h1>Ramez SIM Manager</h1><h2>تقرير المبيعات</h2><p>عدد العمليات: ${o.length} | المبيعات: ${money(sales)} | الأرباح: ${money(profit)}</p><table><thead><tr><th>التاريخ</th><th>الرقم</th><th>الشركة</th><th>العملية</th><th>البيع</th><th>الربح</th></tr></thead><tbody>${rows}</tbody></table>`);
+}
+function printWindow(title,body,pdfSvg=''){
+ let w=window.open('','_blank');
+ if(!w)return alert('اسمح بالنوافذ المنبثقة للطباعة');
+ const safeTitle=esc(title); const safeSvg=JSON.stringify(pdfSvg||'');
+ w.document.open();
+ w.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>${safeTitle}</title><style>
+ body{font-family:Arial,sans-serif;padding:20px;color:#182235;margin:0;background:#fff;box-sizing:border-box}h1{color:#17366f;margin:0 0 8px;font-size:28px}h2{margin:0 0 14px;font-size:23px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;position:sticky;top:0;background:#fff;padding:8px 0;z-index:5}.actions button{border:0;border-radius:12px;padding:12px 16px;font-size:16px;font-weight:800;cursor:pointer;min-height:48px}.back{background:#edf2f7;color:#31445c}.pdf{background:#2f7de1;color:#fff}.img{background:#7c5cff;color:#fff}.wa{background:#12a36d;color:#fff}.print{background:#12a36d;color:#fff}.hint{color:#718096;font-size:13px;margin:0 0 14px;line-height:1.7}#statementContent{width:100%;box-sizing:border-box}table{width:100%;border-collapse:collapse;margin-top:20px;table-layout:fixed}th,td{border:1px solid #ddd;padding:9px 7px;text-align:right;vertical-align:middle;white-space:normal;word-break:break-word}th{background:#f2f5f9}.totals{margin-top:20px;font-size:18px;line-height:2.1}@media print{.actions,.hint{display:none!important}body{padding:10mm}#statementContent{width:100%}table{font-size:11px;page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}thead{display:table-header-group}}@media(max-width:600px){body{padding:14px}.actions button{flex:1;min-width:120px}}
+ 
+/* Advanced manager additions */
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.section-title h2{margin:0}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini-card{background:#fff;border:1px solid #e9eef5;border-radius:16px;padding:14px}.mini-card b{display:block;font-size:20px;margin-top:6px}.status-ok{color:var(--green)}.status-warn{color:var(--orange)}.status-danger{color:var(--red)}
+.chart{display:flex;align-items:flex-end;gap:8px;height:190px;padding:14px 4px 0;border-bottom:1px solid var(--line)}.barcol{flex:1;min-width:24px;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:flex-end;gap:5px}.barcol .barv{background:linear-gradient(180deg,#2f7de1,#2bb8d8);border-radius:8px 8px 2px 2px;min-height:3px}.barcol span{font-size:10px;color:#718096}.search-results .company{margin:8px 0}.muted-box{background:#f7f9fc;border:1px dashed #d9e1ec;border-radius:14px;padding:12px}.pill{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:999px;background:#edf2f7;color:#53657a;font-size:11px;font-weight:800}.danger-text{color:var(--red);font-weight:900}.success-text{color:var(--green);font-weight:900}
+.pin-overlay{position:fixed;inset:0;background:#f5f7fb;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px}.pin-box{width:min(420px,100%);background:#fff;border:1px solid #e5eaf2;border-radius:24px;padding:24px;box-shadow:0 20px 60px #10204018;text-align:center}.pin-dots{font-size:28px;letter-spacing:8px;margin:15px 0}.pin-box input{text-align:center;font-size:24px;letter-spacing:8px}.logo-small{width:42px;height:42px;object-fit:contain;border-radius:10px;border:1px solid #e5eaf2;padding:3px;background:#fff}
+@media(max-width:760px){.kpi-grid{grid-template-columns:1fr 1fr}.chart{height:160px}.tabs{grid-template-columns:none}.company-name{font-size:16px}}
+</style></head><body><div class="actions"><button id="backBtn" class="back">← رجوع</button><button id="pdfBtn" class="pdf">📄 تصدير PDF</button><button id="imgBtn" class="img">🖼️ حفظ كصورة</button><button id="waBtn" class="wa">💬 واتساب</button><button id="printBtn" class="print">🖨️ طباعة</button></div><p class="hint">PDF يتم إنشاؤه كملف PDF فعلي، والصورة بحجم ثابت بدون قص.</p><div id="statementContent">${body}</div><script>
+(function(){
+ const content=document.getElementById('statementContent');
+ const pdfSvg=${safeSvg};
+ function goBack(){try{if(window.opener&&!window.opener.closed){window.close();return}}catch(e){}try{history.back()}catch(e){}}
+ function printPage(){window.print()}
+ function loadJsPDF(){return new Promise((resolve,reject)=>{if(window.jspdf&&window.jspdf.jsPDF){resolve(window.jspdf.jsPDF);return}const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=()=>window.jspdf&&window.jspdf.jsPDF?resolve(window.jspdf.jsPDF):reject(new Error('jsPDF unavailable'));s.onerror=()=>reject(new Error('jsPDF load failed'));document.head.appendChild(s)})}
+ function svgImage(){return new Promise((resolve,reject)=>{if(!pdfSvg){reject(new Error('No PDF content'));return}const img=new Image();img.onload=()=>resolve(img);img.onerror=reject;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(pdfSvg)})}
+ async function exportPDF(){
+  try{
+   const JsPDF=await loadJsPDF(); const img=await svgImage();
+   const scale=2; const canvas=document.createElement('canvas'); canvas.width=1080*scale; canvas.height=Math.ceil(img.height*scale); const ctx=canvas.getContext('2d'); ctx.fillStyle='#fff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height);
+   const pdf=new JsPDF({orientation:'p',unit:'mm',format:'a4',compress:true});
+   const pageW=210,pageH=297, margin=8, usableW=pageW-margin*2; const pxPerMm=canvas.width/usableW; const pagePx=Math.floor((pageH-margin*2)*pxPerMm); let y=0, first=true;
+   while(y<canvas.height){const h=Math.min(pagePx,canvas.height-y); const slice=document.createElement('canvas'); slice.width=canvas.width; slice.height=h; slice.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h); if(!first)pdf.addPage(); first=false; const data=slice.toDataURL('image/jpeg',.94); const mmH=h/pxPerMm; pdf.addImage(data,'JPEG',margin,margin,usableW,mmH); y+=h;}
+   pdf.save('كشف-حساب.pdf');
+  }catch(e){console.error(e);alert('تعذر إنشاء ملف PDF. إذا كان الإنترنت ضعيفًا، استخدم الطباعة ثم مشاركة → حفظ في الملفات.')}
+ }
+ async function saveImage(){try{const img=await svgImage();const scale=2,canvas=document.createElement('canvas');canvas.width=1080*scale;canvas.height=Math.ceil(img.height*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);canvas.toBlob(function(blob){if(!blob)return alert('تعذر إنشاء الصورة');const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='كشف-حساب.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1200)},'image/png',.95)}catch(e){alert('تعذر إنشاء الصورة. حاول مرة أخرى.')}}
+ async function shareWhatsApp(){try{const img=await svgImage();const scale=2,canvas=document.createElement('canvas');canvas.width=1080*scale;canvas.height=Math.ceil(img.height*scale);const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);canvas.toBlob(async function(blob){if(!blob)return alert('تعذر إنشاء الصورة');const file=new File([blob],'كشف-حساب.png',{type:'image/png'});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){try{await navigator.share({files:[file],text:'كشف حساب من Ramez SIM'});return}catch(e){if(e.name==='AbortError')return}}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='كشف-حساب.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)},'image/png',.95)}catch(e){alert('تعذر تجهيز الصورة لواتساب. استخدم حفظ كصورة ثم شاركها.')}}
+ document.getElementById('backBtn').onclick=goBack; document.getElementById('pdfBtn').onclick=exportPDF; document.getElementById('imgBtn').onclick=saveImage; document.getElementById('waBtn').onclick=shareWhatsApp; document.getElementById('printBtn').onclick=printPage;
+})();<\/script></body></html>`);
+ w.document.close();
+}
+
+
+function getProfile(key){data.customerProfiles ||= {}; data.customerProfiles[key] ||= {}; return data.customerProfiles[key];}
+function editCustomerNote(key){let c=getCustomer(key);if(!c)return;let p=getProfile(c.key);let note=prompt('ملاحظة العميل؟',p.note||'');if(note===null)return;p.note=note.trim();save();showStatement(key);}
+function editSimMeta(id){let s=data.sims.find(x=>x.id==id);if(!s)return;let note=prompt('ملاحظات الخط؟',s.notes||'');if(note===null)return;let next=prompt('موعد التجديد القادم YYYY-MM-DD؟',s.nextRenewal||'');if(next===null)return;s.notes=note.trim();s.nextRenewal=next.trim();save();notify('📝 تم تحديث بيانات الخط');}
+function changeSimStatus(id){let s=data.sims.find(x=>x.id==id);if(!s)return;let v=prompt('الحالة: متوفر / محجوز / مباع / ملغي',s.status==='available'?'متوفر':s.status==='reserved'?'محجوز':s.status==='sold'?'مباع':'ملغي');if(v===null)return;v=v.trim();let map={'متوفر':'available','محجوز':'reserved','مباع':'sold','ملغي':'cancelled','available':'available','reserved':'reserved','sold':'sold','cancelled':'cancelled'};if(!map[v])return alert('الحالة غير صحيحة');s.status=map[v];save();}
+function renewalRecords(){const now=new Date();const arr=[];data.sims.forEach(s=>{if(!s.nextRenewal)return;const d=new Date(s.nextRenewal+'T23:59:59');if(isNaN(d))return;const diff=Math.ceil((d-now)/86400000);if(diff>=0)arr.push({s,d,diff});});return arr.sort((a,b)=>a.diff-b.diff);}
+function renderRenewals(){const q=(document.getElementById('renewalSearch')?.value||'').trim().toLowerCase();const w=document.getElementById('renewalWindow')?.value||'30';let arr=renewalRecords().filter(x=>(w==='all'||x.diff<=Number(w)) && ((x.s.phone+' '+(x.s.customerName||'')+' '+companyName(x.s.companyId)).toLowerCase().includes(q)));const el=document.getElementById('renewalList');if(!el)return;el.innerHTML=arr.length?arr.map(x=>{let c=x.s.customerPhone||'';return `<div class="company"><div class="company-head"><div><div class="company-name">${esc(x.s.phone)}</div><div class="company-meta">${esc(x.s.customerName||'غير مسمى')} · ${esc(companyName(x.s.companyId))}</div></div><span class="pill ${x.diff<=3?'danger-text':''}">${x.diff===0?'اليوم':x.diff===1?'غدًا':'بعد '+x.diff+' يوم'}</span></div><div class="company-bottom" style="margin-top:8px"><span>📅 ${esc(x.s.nextRenewal)}</span><span>${money(x.s.salePrice||0)}</span></div><div style="display:flex;gap:7px;margin-top:10px;flex-wrap:wrap"><button class="btn primary" style="padding:8px 11px" onclick="renewSim(${x.s.id})">🔄 تسجيل تجديد</button>${c?`<button class="btn success" style="padding:8px 11px" onclick="openWhatsApp('${encodeURIComponent(c)}','${encodeURIComponent('تذكير بتجديد الخط '+x.s.phone)}')">💬 واتساب</button>`:''}</div></div>`}).join(''):'<div class="empty">لا توجد تجديدات قادمة ضمن الفترة المحددة</div>';}
+function openWhatsApp(phone,text){let p=decodeURIComponent(phone).replace(/\D/g,'');if(p.startsWith('0'))p='972'+p.slice(1);window.open('https://wa.me/'+p+'?text='+encodeURIComponent(decodeURIComponent(text)),'_blank');}
+function renderGlobalSearch(){const q=(document.getElementById('globalSearch')?.value||'').trim().toLowerCase();const el=document.getElementById('globalResults');if(!el)return;if(!q){el.innerHTML='<div class="empty">اكتب رقمًا أو اسمًا للبحث في الخطوط والعملاء والشركات</div>';return;}let sims=data.sims.filter(s=>(s.phone+' '+(s.customerName||'')+' '+(s.customerPhone||'')+' '+companyName(s.companyId)).toLowerCase().includes(q));let cs=customerRecords().filter(c=>(c.name+' '+c.phone).toLowerCase().includes(q));let companies=data.companies.filter(c=>c.name.toLowerCase().includes(q));let html='';companies.forEach(c=>html+=`<div class="company"><b>🏢 ${esc(c.name)}</b><div class="small">سعر الجملة الافتراضي: ${money(c.price)}</div></div>`);sims.forEach(s=>html+=`<div class="company"><div class="company-head"><div><b>📱 ${esc(s.phone)}</b><div class="company-meta">${esc(s.customerName||'غير مباع')} · ${esc(companyName(s.companyId))}</div></div><button class="btn primary" style="padding:8px 11px" onclick="tab('sims',document.querySelectorAll('.tab')[1]);document.getElementById('search').value='${esc(s.phone)}';renderSims()">فتح</button></div></div>`);cs.forEach(c=>html+=`<div class="company"><div class="company-head"><div><b>👤 ${esc(c.name)}</b><div class="company-meta">${esc(c.phone||'لا يوجد رقم')} · المتبقي ${money(c.due)}</div></div><button class="btn primary" style="padding:8px 11px" onclick="showStatement('${encodeURIComponent(c.key)}')">كشف</button></div></div>`);el.innerHTML=html||'<div class="empty">لا توجد نتائج</div>';}
+function printReceipt(key){const c=getCustomer(key);if(!c)return;const pays=(data.customerPayments||[]).filter(p=>((p.customerName||'').trim().toLowerCase()+'|'+(p.customerPhone||'').trim())===c.key).sort((a,b)=>new Date(b.date)-new Date(a.date));const p=pays[0];if(!p)return alert('لا توجد دفعة مسجلة لهذا العميل');let body=`<div style="max-width:520px;margin:auto;border:2px solid #17366f;border-radius:18px;padding:24px"><h1 style="color:#17366f;margin:0 0 6px">${esc(data.settings?.storeName||'Ramez SIM Manager')}</h1><h2>🧾 إيصال دفع</h2><p><b>العميل:</b> ${esc(c.name)}</p><p><b>الهاتف:</b> ${esc(c.phone||'-')}</p><hr><p style="font-size:26px"><b>المبلغ المدفوع: ${money(p.amount)}</b></p><p><b>التاريخ:</b> ${new Date(p.date).toLocaleString('ar')}</p><p><b>المتبقي:</b> ${money(c.due)}</p><p style="color:#718096">شكرًا لتعاملكم معنا.</p></div>`;printWindow('إيصال دفع',body);}
+
+function currentUser(){return (data.users||[]).find(u=>u.id==data.currentUserId)||(data.users||[])[0]||{name:'رامز',role:'مدير'};}
+function setActiveUser(){data.currentUserId=Number(document.getElementById('activeUser')?.value||1);save();notify('👤 تم تغيير المستخدم الحالي');}
+function addUser(){const name=(document.getElementById('newUserName')?.value||'').trim();const role=document.getElementById('newUserRole')?.value||'موظف';if(!name)return alert('اكتب اسم المستخدم');data.users.push({id:Date.now(),name,role});document.getElementById('newUserName').value='';save();notify('👤 تمت إضافة المستخدم');}
+function removeUser(id){if(data.users.length<=1)return alert('يجب أن يبقى مستخدم واحد على الأقل');if(Number(id)===Number(data.currentUserId))return alert('غيّر المستخدم الحالي أولًا');data.users=data.users.filter(u=>u.id!=id);save();}
+function renderUsers(){const sel=document.getElementById('activeUser'),list=document.getElementById('userList');if(!sel||!list)return;sel.innerHTML=(data.users||[]).map(u=>`<option value="${u.id}" ${u.id==data.currentUserId?'selected':''}>${esc(u.name)} · ${esc(u.role)}</option>`).join('');list.innerHTML=(data.users||[]).map(u=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)"><span><b>${esc(u.name)}</b> <span class="pill">${esc(u.role)}</span></span>${u.id!=data.currentUserId?`<button class="btn danger" style="padding:6px 9px" onclick="removeUser(${u.id})">حذف</button>`:'<span class="small">المستخدم الحالي</span>'}</div>`).join('');}
+function saveSettings(){data.settings ||= {};data.settings.storeName=document.getElementById('storeName')?.value||'Ramez SIM Manager';data.settings.storeWhatsApp=document.getElementById('storeWhatsApp')?.value||'';data.settings.pin=document.getElementById('pinSetting')?.value||'';data.settings.autoLock=Number(document.getElementById('autoLock')?.value||0);save();notify('⚙️ تم حفظ الإعدادات');}
+function loadSettings(){const st=data.settings||{};if(document.getElementById('storeName'))document.getElementById('storeName').value=st.storeName||'Ramez SIM Manager';if(document.getElementById('storeWhatsApp'))document.getElementById('storeWhatsApp').value=st.storeWhatsApp||'';if(document.getElementById('pinSetting'))document.getElementById('pinSetting').value=st.pin||'';if(document.getElementById('autoLock'))document.getElementById('autoLock').value=String(st.autoLock||0); renderUsers();}
+function maybeLock(){const pin=data.settings?.pin;if(!pin)return;const overlay=document.createElement('div');overlay.className='pin-overlay';overlay.id='pinOverlay';overlay.innerHTML=`<div class="pin-box"><h2>🔐 Ramez SIM</h2><p class="small">أدخل رمز PIN للمتابعة</p><input id="unlockPin" type="password" inputmode="numeric" maxlength="6" autofocus><div class="pin-dots">••••••</div><button class="btn primary" style="width:100%" onclick="unlockApp()">فتح الموقع</button></div>`;document.body.appendChild(overlay);}
+function unlockApp(){const v=document.getElementById('unlockPin')?.value||'';if(v===data.settings.pin){document.getElementById('pinOverlay')?.remove();localStorage.setItem('ramez_sim_last_unlock',String(Date.now()));}else alert('رمز PIN غير صحيح');}
+function checkAutoLock(){const mins=Number(data.settings?.autoLock||0);if(!mins||!data.settings?.pin)return;const last=Number(localStorage.getItem('ramez_sim_last_unlock')||0);if(last && Date.now()-last<mins*60000)return;maybeLock();}
+function renderReport(){
+ let o=ops(),sales=o.reduce((a,x)=>a+x.price,0),cost=o.reduce((a,x)=>a+x.wholesale,0),profit=sales-cost;
+ let rows=data.companies.map(c=>{let x=o.filter(a=>a.companyId==c.id);return {name:c.name,count:x.length,sales:x.reduce((a,z)=>a+z.price,0),profit:x.reduce((a,z)=>a+z.price-z.wholesale,0)}}).filter(x=>x.count);
+ const maxSales=Math.max(1,...rows.map(r=>r.sales)); const chart=rows.length?`<div class="chart">${rows.map(r=>`<div class="barcol" title="${esc(r.name)}"><b style="font-size:10px">${money(r.sales)}</b><div class="barv" style="height:${Math.max(4,Math.round(r.sales/maxSales*120))}px"></div><span>${esc(r.name)}</span></div>`).join('')}</div>`:'';
+ const dayMap={};o.forEach(x=>{const k=new Date(x.date).toLocaleDateString('en-CA');dayMap[k]=(dayMap[k]||0)+Number(x.price||0)});const days=Object.entries(dayMap).sort((a,b)=>a[0].localeCompare(b[0])).slice(-7);const maxDay=Math.max(1,...days.map(x=>x[1]));const dailyChart=days.length?`<div class="chart">${days.map(x=>`<div class="barcol"><b style="font-size:9px">${money(x[1])}</b><div class="barv" style="height:${Math.max(4,Math.round(x[1]/maxDay*120))}px"></div><span>${x[0].slice(5)}</span></div>`).join('')}</div>`:'<div class="empty">لا توجد مبيعات في الفترة</div>';
+document.getElementById('report').innerHTML=`<div class="cards"><div class="card"><div class="label">المبيعات</div><div class="big">${money(sales)}</div></div><div class="card"><div class="label">التكلفة</div><div class="big">${money(cost)}</div></div><div class="card"><div class="label">الربح</div><div class="big green">${money(profit)}</div></div><div class="card"><div class="label">الديون الحالية</div><div class="big red">${money(customerRecords().reduce((a,c)=>a+c.due,0))}</div></div></div><div class="panel" style="margin-top:14px;padding:12px"><h3 style="margin:0">📅 المبيعات اليومية</h3>${dailyChart}</div><div class="panel" style="margin-top:14px;padding:12px"><h3 style="margin:0">📈 المبيعات حسب الشركة</h3>${chart||'<div class="empty">لا توجد بيانات</div>'}</div><div class="tablewrap" style="margin-top:14px"><table><thead><tr><th>الشركة</th><th>العمليات</th><th>المبيعات</th><th>الربح</th><th>المخزون</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${r.count}</td><td>${money(r.sales)}</td><td>${money(r.profit)}</td><td>${data.sims.filter(s=>s.companyId==data.companies.find(c=>c.name===r.name)?.id&&s.status==='available').length}</td></tr>`).join('')||'<tr><td colspan="5" class="empty">لا توجد بيانات</td></tr>'}</tbody></table></div>`
+}
+function renderCompanies(){document.getElementById('companyList').innerHTML=data.companies.map(c=>`<div class="company-row" style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:10px">${companyLogoHtml(c)}<b>${esc(c.name)}</b></div><span class="small">الجملة: ${money(c.price)} · متوفر: ${data.sims.filter(s=>s.companyId==c.id&&s.status==='available').length} · مباع: ${data.sims.filter(s=>s.companyId==c.id&&s.status==='sold').length}</span></div>`).join('')}
+function notify(msg){let t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
+
+function chooseBackupFile(){document.getElementById('backupFile').click()}
+function restoreData(raw,sourceLabel){
+  try{
+    if(!raw || typeof raw!=='object' || !Array.isArray(raw.companies) || !Array.isArray(raw.sims)) throw new Error('صيغة النسخة الاحتياطية غير صحيحة');
+    if(!confirm(`سيتم استبدال البيانات الحالية ببيانات ${sourceLabel}. هل تريد المتابعة؟`)) return;
+    data={...raw,companies:raw.companies,sims:raw.sims,customerPayments:Array.isArray(raw.customerPayments)?raw.customerPayments:[]};
+    normalize();
+    localStorage.setItem(KEY,JSON.stringify(data));
+    goHome();
+    notify('✅ تم استرجاع النسخة الاحتياطية بنجاح');
+  }catch(e){alert('تعذر استرجاع النسخة الاحتياطية: '+e.message)}
+}
+function importBackupFile(event){
+  const file=event.target.files?.[0];
+  event.target.value='';
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{restoreData(JSON.parse(reader.result),'الملف الذي اخترته')}
+    catch(e){alert('الملف ليس نسخة JSON صالحة.')}
+  };
+  reader.onerror=()=>alert('تعذر قراءة الملف.');
+  reader.readAsText(file,'utf-8');
+}
+function exportData(){let blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ramez-sim-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);notify('💾 تم تصدير نسخة احتياطية')}
+
+function opNet(o){return Math.max(0,Number(o.price||0)-Number(o.discount||0))}
+function opProfit(o){return opNet(o)-Number(o.wholesale||0)-Number(o.expense||0)}
+function logActivity(text,type='عام'){data.activity=data.activity||[];data.activity.unshift({id:Date.now()+Math.random(),date:nowDate(),user:currentUser().name,type,text});data.activity=data.activity.slice(0,200)}
+function fillTemplate(t,c){return String(t||'').replaceAll('{name}',c.name||'').replaceAll('{phone}',c.phone||'').replaceAll('{date}',c.date||'').replaceAll('{due}',money(c.due||0)).replaceAll('{total}',money(c.total||0))}
+function saveWATemplates(){data.settings.waRenewTpl=document.getElementById('waRenewTpl').value;data.settings.waStatementTpl=document.getElementById('waStatementTpl').value;data.settings.waWelcomeTpl=document.getElementById('waWelcomeTpl').value;save();notify('💬 تم حفظ قوالب واتساب')}
+function loadWATemplates(){const st=data.settings||{};const a=document.getElementById('waRenewTpl'),b=document.getElementById('waStatementTpl'),c=document.getElementById('waWelcomeTpl');if(a)a.value=st.waRenewTpl||'مرحبًا {name}، تذكير من Ramez SIM بأن تجديد الخط {phone} اقترب بتاريخ {date}.';if(b)b.value=st.waStatementTpl||'مرحبًا {name}، هذا كشف حسابك من Ramez SIM. المتبقي: {due}';if(c)c.value=st.waWelcomeTpl||'مرحبًا {name}، تم تسجيل الخط {phone} بنجاح. شكرًا لتعاملك معنا.'}
+function openQuickSell(){let phone=prompt('رقم الخط للبيع السريع؟','');if(!phone)return;let s=data.sims.find(x=>x.phone.trim()===phone.trim());if(!s)return alert('الخط غير موجود. أضفه أولًا.');if(s.status!=='available')return alert('هذا الخط مباع أو محجوز.');sellSim(s.id,'بيع')}
+function openQuickRenew(){let phone=prompt('رقم الخط للتجديد السريع؟','');if(!phone)return;let s=data.sims.find(x=>x.phone.trim()===phone.trim());if(!s)return alert('الخط غير موجود.');renewSim(s.id)}
+function renderDaily(){const el=document.getElementById('dailyOverview');if(!el)return;const todayOps=allOps().filter(o=>new Date(o.date).toDateString()===new Date().toDateString());const sales=todayOps.reduce((a,o)=>a+opNet(o),0),profit=todayOps.reduce((a,o)=>a+opProfit(o),0),payments=(data.customerPayments||[]).filter(p=>new Date(p.date).toDateString()===new Date().toDateString()).reduce((a,p)=>a+Number(p.amount||0),0),due=customerRecords().reduce((a,c)=>a+c.due,0),renew=renewalRecords().filter(x=>x.diff>=0&&x.diff<=7);el.innerHTML=`<div class="kpi-grid"><div class="mini-card">💰 المبيعات اليوم<b>${money(sales)}</b></div><div class="mini-card">📈 صافي الربح<b class="status-ok">${money(profit)}</b></div><div class="mini-card">💳 دفعات اليوم<b>${money(payments)}</b></div><div class="mini-card">🔴 إجمالي الديون<b class="status-danger">${money(due)}</b></div></div><div class="quick-grid" style="margin-top:12px"><div class="notice">🔄 <b>${renew.length}</b> تجديدات خلال 7 أيام</div><div class="notice">📦 <b>${data.sims.filter(s=>s.status==='available').length}</b> خطوط متوفرة</div><div class="notice">👥 <b>${customerRecords().length}</b> عملاء</div><div class="notice">🧾 <b>${todayOps.length}</b> عمليات اليوم</div></div>`;const al=document.getElementById('activityList');if(al)al.innerHTML=(data.activity||[]).slice(0,12).map(a=>`<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>${esc(a.text)}</b><div class="small">${esc(a.type)} · ${esc(a.user||'')} · ${new Date(a.date).toLocaleString('ar')}</div></div>`).join('')||'<div class="empty">لا يوجد نشاط مسجل بعد</div>'}
+function exportCSV(kind){let rows=[],name='ramez-'+kind+'.csv';if(kind==='customers'){rows=[['الاسم','الهاتف','إجمالي الخدمات','المدفوع','المتبقي'],...customerRecords().map(c=>[c.name,c.phone,c.total,c.paid,c.due])]}else if(kind==='sales'){rows=[['التاريخ','الفاتورة','النوع','الخط','العميل','الشركة','المبلغ','الخصم','المصاريف','الربح','الموظف'],...allOps().map(o=>[o.date,o.invoice||'',o.type,o.phone,o.customerName||'',companyName(o.companyId),opNet(o),o.discount||0,o.expense||0,opProfit(o),o.operator||''])]}else if(kind==='payments'){rows=[['التاريخ','العميل','الهاتف','المبلغ','الملاحظة','الموظف'],...(data.customerPayments||[]).map(p=>[p.date,p.customerName,p.customerPhone,p.amount,p.note||'',p.operator||''])]}else{rows=[['الخط','الشركة','الحالة','الجملة','سعر البيع','العميل','الهاتف'],...data.sims.map(s=>[s.phone,companyName(s.companyId),s.status,s.wholesale,s.salePrice,s.customerName||'',s.customerPhone||''])]};const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);notify('📤 تم تصدير CSV')}
+function periodStats(from,to){const a=new Date(from+'T00:00:00'),b=new Date(to+'T23:59:59');const arr=allOps().filter(o=>{const d=new Date(o.date);return d>=a&&d<=b});return {count:arr.length,sales:arr.reduce((x,o)=>x+opNet(o),0),profit:arr.reduce((x,o)=>x+opProfit(o),0)}}
+function comparePeriods(){const f1=document.getElementById('cmpFrom1').value,t1=document.getElementById('cmpTo1').value,f2=document.getElementById('cmpFrom2').value,t2=document.getElementById('cmpTo2').value;if(!f1||!t1||!f2||!t2)return alert('حدد الفترتين أولًا');const a=periodStats(f1,t1),b=periodStats(f2,t2);const diff=(x,y)=>y?Math.round((x-y)/y*100):0;document.getElementById('comparisonResult').innerHTML=`<div class="cards"><div class="card"><div class="label">الفترة الأولى</div><div class="big">${money(a.sales)}</div><div class="sub">ربح ${money(a.profit)} · ${a.count} عملية</div></div><div class="card"><div class="label">الفترة الثانية</div><div class="big">${money(b.sales)}</div><div class="sub">ربح ${money(b.profit)} · ${b.count} عملية</div></div><div class="card"><div class="label">تغير المبيعات</div><div class="big ${diff(b.sales,a.sales)>=0?'green':'red'}">${diff(b.sales,a.sales)}%</div></div><div class="card"><div class="label">تغير الأرباح</div><div class="big ${diff(b.profit,a.profit)>=0?'green':'red'}">${diff(b.profit,a.profit)}%</div></div></div>`}
+
+function normalizeRenewalPhone(v){
+  let x=String(v??'').replace(/\u00a0/g,' ').trim().replace(/\.0+$/,'').replace(/[^0-9+]/g,'');
+  if(!x)return '';
+  if(x.startsWith('+970')) x='0'+x.slice(4);
+  else if(x.startsWith('970')) x='0'+x.slice(3);
+  else if(x.startsWith('+972')) x='0'+x.slice(4);
+  else if(x.startsWith('972')) x='0'+x.slice(3);
+  if(/^5\d{8}$/.test(x)) x='0'+x;
+  return x;
+}
+function renewalValue(row,names){
+  const keys=Object.keys(row||{});
+  const norm=v=>String(v??'').replace(/^\uFEFF/,'').trim().toLowerCase().replace(/[\s_\-–—():/\\]+/g,'');
+  const wanted=names.map(norm);
+  for(const key of keys){
+    const nk=norm(key);
+    if(wanted.includes(nk)){
+      const v=String(row[key]??'').trim(); if(v)return v;
+    }
+  }
+  for(const key of keys){
+    const nk=norm(key);
+    if(wanted.some(n=>n && (nk.includes(n)||n.includes(nk)))){
+      const v=String(row[key]??'').trim(); if(v)return v;
+    }
+  }
+  return '';
+}
+function renewalHeaderScore(row){
+  const joined=Object.values(row||{}).map(v=>String(v??'').trim().toLowerCase()).join(' | ');
+  let score=0;
+  if(/رقم.*(الهاتف|الخط|الموبايل)|الهاتف|mobile|phone|msisdn/.test(joined))score+=5;
+  if(/اسم.*(الزبون|العميل|المشترك)|customer|name/.test(joined))score+=2;
+  if(/تاريخ.*(انتهاء|نهاية)|expiry|expiration|end date/.test(joined))score+=2;
+  if(/اسم.*(الرزمة|الباقة)|package/.test(joined))score+=1;
+  return score;
+}
+function matrixToRenewalRows(matrix){
+  if(!Array.isArray(matrix)||!matrix.length)return [];
+  let headerIndex=0,best=-1;
+  for(let i=0;i<Math.min(matrix.length,20);i++){
+    const obj={};(matrix[i]||[]).forEach((v,j)=>obj[String(j)]=v);
+    const score=renewalHeaderScore(obj);if(score>best){best=score;headerIndex=i;}
+  }
+  const headers=(matrix[headerIndex]||[]).map((v,i)=>String(v??'').replace(/^\uFEFF/,'').trim()||`عمود ${i+1}`);
+  const objects=[];
+  for(let i=headerIndex+1;i<matrix.length;i++){
+    const vals=matrix[i]||[];if(!vals.some(v=>String(v??'').trim()))continue;
+    const obj={};headers.forEach((h,j)=>obj[h]=vals[j]??'');objects.push(obj);
+  }
+  return objects;
+}
+function normalizeRenewalDate(v){
+  if(v===null||v===undefined||String(v).trim()==='') return '';
+  if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  let x=String(v).trim().replace(/^\uFEFF/,'');
+  if(!x) return '';
+  // Excel serial date, e.g. 45900. The 1899-12-30 base matches Excel's Windows date system.
+  if(/^\d+(?:\.\d+)?$/.test(x)){
+    const n=Number(x);
+    if(n>20000 && n<80000){
+      const d=new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000);
+      if(!isNaN(d)) return d.toISOString().slice(0,10);
+    }
+  }
+  // ISO / ISO datetime
+  let m=x.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if(m){
+    const y=Number(m[1]),mo=Number(m[2]),day=Number(m[3]);
+    if(y>=1900&&mo>=1&&mo<=12&&day>=1&&day<=31) return `${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+  // Common DD/MM/YYYY or DD-MM-YYYY formats.
+  m=x.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+  if(m){
+    const a=Number(m[1]),b=Number(m[2]),y=Number(m[3]);
+    let day=a,mo=b;
+    // If the first part is >12 it must be the day; otherwise default to DD/MM/YYYY.
+    if(a<=12 && b>12){ day=b;mo=a; }
+    if(y>=1900&&mo>=1&&mo<=12&&day>=1&&day<=31) return `${y}-${String(mo).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  }
+  const d=new Date(x);
+  if(!isNaN(d)) return d.toISOString().slice(0,10);
+  return x;
+}
+function buildRenewalRecord(r){return {
+  phone:normalizeRenewalPhone(renewalValue(r,['رقم الهاتف','الهاتف','رقم الخط','رقم الموبايل','الجوال','رقم الجوال','מספר טלפון','מספר הטלפון','mobile','phone','msisdn'])),
+  simNumber:String(renewalValue(r,['رقم الشريحة','رقم السيم','ICCID','sim','iccid'])||'').trim(),
+  customerName:renewalValue(r,['اسم الزبون','اسم العميل','اسم المشترك','العميل','الزبون','اسم العميل/المشترك','customer','customer name','subscriber','name']),
+  endDate:normalizeRenewalDate(renewalValue(r,['تاريخ نهاية الرزمة','تاريخ الانتهاء','تاريخ نهاية الباقة','تاريخ انتهاء الرزمة','تاريخ انتهاء الباقة','تاريخ نهاية الحزمة','تاريخ انتهاء الحزمة','expiry','expiration','end date','expiry date'])),
+  packageName:renewalValue(r,['اسم الرزمة','اسم الباقة','الرزمة','الباقة','package']),
+  carrier:renewalValue(r,['شركة الاتصالات','شركة الإتصالات','الشركة','carrier','operator']),
+  agent:renewalValue(r,['اسم الوكيل','الوكيل','agent'])
+};}
+async function readXlsxMatrix(arrayBuffer){
+  const bytes=new Uint8Array(arrayBuffer), view=new DataView(arrayBuffer);
+  const u16=(o)=>view.getUint16(o,true), u32=(o)=>view.getUint32(o,true);
+  let eocd=-1; const min=Math.max(0,bytes.length-65557);
+  for(let i=bytes.length-22;i>=min;i--){if(u32(i)===0x06054b50){eocd=i;break;}}
+  if(eocd<0)throw new Error('ملف Excel غير صالح أو غير مدعوم.');
+  const cdSize=u32(eocd+12), cdOffset=u32(eocd+16);
+  const entries=new Map(); let pos=cdOffset, end=cdOffset+cdSize;
+  const dec=new TextDecoder('utf-8');
+  while(pos<end){
+    if(u32(pos)!==0x02014b50)break;
+    const method=u16(pos+10), compSize=u32(pos+20), uncompSize=u32(pos+24);
+    const nameLen=u16(pos+28), extraLen=u16(pos+30), commentLen=u16(pos+32), localOffset=u32(pos+42);
+    const name=dec.decode(bytes.slice(pos+46,pos+46+nameLen));
+    entries.set(name,{method,compSize,uncompSize,localOffset});
+    pos+=46+nameLen+extraLen+commentLen;
+  }
+  const readEntry=async(name)=>{
+    const meta=entries.get(name);if(!meta)throw new Error('ملف Excel ناقص: '+name);
+    const o=meta.localOffset;
+    if(u32(o)!==0x04034b50)throw new Error('تعذر قراءة ملف Excel.');
+    const nameLen=u16(o+26),extraLen=u16(o+28),dataStart=o+30+nameLen+extraLen;
+    const raw=bytes.slice(dataStart,dataStart+meta.compSize);
+    if(meta.method===0)return raw;
+    if(meta.method===8){
+      if(typeof DecompressionStream==='undefined')throw new Error('متصفحك لا يدعم قراءة ملفات Excel المضغوطة. استخدم CSV من Sky.');
+      const ds=new DecompressionStream('deflate-raw');
+      const ab=await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+      return new Uint8Array(ab);
+    }
+    throw new Error('نوع ضغط Excel غير مدعوم.');
+  };
+  const xml=async(name)=>new DOMParser().parseFromString(dec.decode(await readEntry(name)),'application/xml');
+  const wb=await xml('xl/workbook.xml');
+  const relDoc=await xml('xl/_rels/workbook.xml.rels');
+  const rels={};
+  relDoc.querySelectorAll('Relationship').forEach(r=>{rels[r.getAttribute('Id')]=r.getAttribute('Target')||'';});
+  let shared=[];
+  if(entries.has('xl/sharedStrings.xml')){
+    const ss=await xml('xl/sharedStrings.xml');
+    ss.querySelectorAll('si').forEach(si=>shared.push(Array.from(si.querySelectorAll('t')).map(t=>t.textContent||'').join('')));
+  }
+  const nsFix=(target)=>{
+    let t=String(target||'').replace(/^\/+/, '');
+    if(t.startsWith('xl/'))return t;
+    if(t.startsWith('/'))return t.slice(1);
+    return 'xl/'+t.replace(/^\.\//,'');
+  };
+  const sheets=[];
+  wb.querySelectorAll('sheet').forEach(sh=>sheets.push({name:sh.getAttribute('name')||'Sheet',path:nsFix(rels[sh.getAttribute('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id')]||rels[sh.getAttribute('r:id')]||'')}));
+  if(!sheets.length)throw new Error('ملف Excel لا يحتوي على أوراق.');
+  const colIndex=(ref)=>{const m=String(ref||'').match(/^([A-Z]+)/i);if(!m)return 0;let n=0;for(const ch of m[1].toUpperCase())n=n*26+ch.charCodeAt(0)-64;return n-1;};
+  const matrices=[];
+  for(const sh of sheets){
+    if(!entries.has(sh.path))continue;
+    const doc=await xml(sh.path), matrix=[];
+    doc.querySelectorAll('sheetData > row').forEach(row=>{
+      const vals=[];
+      row.querySelectorAll(':scope > c').forEach(c=>{
+        const ref=c.getAttribute('r')||'', idx=colIndex(ref), type=c.getAttribute('t')||'';
+        let val='';
+        if(type==='inlineStr')val=Array.from(c.querySelectorAll('is t')).map(t=>t.textContent||'').join('');
+        else if(type==='s'){const v=c.querySelector('v');val=v?String(shared[Number(v.textContent)]??''):'';}
+        else if(type==='str'){const v=c.querySelector('v');val=v?v.textContent||'':'';}
+        else {const v=c.querySelector('v');val=v?v.textContent||'':'';}
+        vals[idx]=val;
+      });
+      matrix.push(vals);
+    });
+    matrices.push({name:sh.name,matrix});
+  }
+  return matrices;
+}
+async function rowsFromRenewalXlsx(arrayBuffer){
+  const sheets=await readXlsxMatrix(arrayBuffer); let best=[];
+  for(const sh of sheets){const candidate=matrixToRenewalRows(sh.matrix).map(buildRenewalRecord).filter(r=>r.phone);if(candidate.length>best.length)best=candidate;}
+  return best;
+}
+function parseRenewalCSV(text){
+  text=String(text||'').replace(/^\uFEFF/,'');
+  const sample=text.split(/\r?\n/).slice(0,10).join('\n');
+  const counts={',':(sample.match(/,/g)||[]).length,';':(sample.match(/;/g)||[]).length,'\t':(sample.match(/\t/g)||[]).length,'|':(sample.match(/\|/g)||[]).length};
+  const delimiter=Object.keys(counts).sort((a,b)=>counts[b]-counts[a])[0]||',';
+  const rows=[];let row=[],cell='',quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i],next=text[i+1];
+    if(ch==='"'){if(quoted&&next==='"'){cell+='"';i++;}else quoted=!quoted;}
+    else if(ch===delimiter&&!quoted){row.push(cell);cell='';}
+    else if((ch==='\n'||ch==='\r')&&!quoted){if(ch==='\r'&&next==='\n')i++;row.push(cell);cell='';if(row.some(v=>String(v).trim()))rows.push(row);row=[];}
+    else cell+=ch;
+  }
+  row.push(cell);if(row.some(v=>String(v).trim()))rows.push(row);return rows;
+}
+function csvToRenewalRows(text){return matrixToRenewalRows(parseRenewalCSV(text)).map(buildRenewalRecord).filter(r=>r.phone);}
+function previewRenewalImport(event){
+  const file=event.target.files?.[0];event.target.value='';if(!file)return;
+  const companyId=Number(document.getElementById('renewalImportCompany')?.value||0);
+  const status=document.getElementById('renewalImportStatus'),preview=document.getElementById('renewalImportPreview');
+  status.textContent='⏳ جارٍ قراءة الملف...';preview.innerHTML='';
+  const ext=(file.name.split('.').pop()||'').toLowerCase();const isCSV=ext==='csv'||/text\/csv/i.test(file.type);
+  const reader=new FileReader();
+  reader.onload=async e=>{try{
+    let rows=[];
+    if(isCSV){status.textContent='⏳ جارٍ تحليل ملف CSV...';rows=csvToRenewalRows(e.target.result);}
+    else{status.textContent='⏳ جارٍ قراءة ملف Excel...';rows=await rowsFromRenewalXlsx(e.target.result);}
+    if(!rows.length)throw new Error('لم أجد أرقام هواتف. تأكد أن الملف يحتوي عمودًا مثل "رقم الهاتف" أو "الهاتف" أو Phone / Mobile.');
+    window.__pendingRenewalImports={companyId,rows};const dup=rows.length-new Set(rows.map(r=>r.phone)).size;
+    status.innerHTML=`✅ تم العثور على <b>${rows.length}</b> رقم${dup?`، منها <b>${dup}</b> تكرار داخل الملف`:''}.`;
+    preview.innerHTML=`<div class="muted-box" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><b>معاينة قبل الحفظ</b><button class="btn success" onclick="savePendingRenewalImports()">💾 استرداد وحفظ</button></div><div class="tablewrap" style="margin-top:10px"><table><thead><tr><th>رقم الهاتف</th><th>اسم الزبون</th><th>تاريخ الانتهاء</th><th>الرزمة</th><th>الشركة</th></tr></thead><tbody>${rows.slice(0,50).map(r=>`<tr><td>${esc(r.phone)}</td><td>${esc(r.customerName||'-')}</td><td>${esc(r.endDate||'-')}</td><td>${esc(r.packageName||'-')}</td><td>${esc(r.carrier||'-')}</td></tr>`).join('')}</tbody></table></div>${rows.length>50?'<div class="small" style="margin-top:8px">تظهر أول 50 سجلًا فقط في المعاينة، وسيتم استرداد جميع السجلات.</div>':''}</div>`;
+  }catch(err){status.textContent='❌ '+(err?.message||'تعذر قراءة الملف.');preview.innerHTML='';window.__pendingRenewalImports=null;}};
+  reader.onerror=()=>status.textContent='❌ تعذر قراءة الملف.';
+  if(isCSV)reader.readAsText(file,'utf-8');else reader.readAsArrayBuffer(file);
+}
+function savePendingRenewalImports(){
+  const pending=window.__pendingRenewalImports; if(!pending?.rows?.length)return alert('لا توجد بيانات جاهزة للاسترداد.');
+  data.renewalImports=Array.isArray(data.renewalImports)?data.renewalImports:[]; const companyId=Number(pending.companyId||0);
+  const existing=new Map(data.renewalImports.map(r=>[`${r.companyId||0}|${normalizeRenewalPhone(r.phone)}`,r])); let added=0,updated=0;
+  pending.rows.forEach(r=>{const phone=normalizeRenewalPhone(r.phone);if(!phone)return;const key=`${companyId}|${phone}`;const old=existing.get(key);const rec={...(old||{}),...r,phone,companyId,importedAt:nowDate()};if(old){Object.assign(old,rec);updated++;}else{data.renewalImports.push(rec);existing.set(key,rec);added++;}});
+  data.skyRenewals=[]; save(); window.__pendingRenewalImports=null; const st=document.getElementById('renewalImportStatus');if(st)st.textContent=`✅ تم استرداد ${added+updated} رقم (${added} جديد، ${updated} محدث).`;const p=document.getElementById('renewalImportPreview');if(p)p.innerHTML='';renderRenewalImports();notify(`🔢 تم استرداد ${added+updated} رقم`);
+}
+function renewalDiff(date){if(!date)return null;const d=new Date(date+'T23:59:59');if(isNaN(d))return null;return Math.ceil((d-new Date())/86400000);}
+function renderRenewalImports(){
+  const list=document.getElementById('renewalImportsList');if(!list)return;const q=(document.getElementById('renewalImportSearch')?.value||'').trim().toLowerCase();const filter=document.getElementById('renewalImportFilter')?.value||'all';const all=data.renewalImports||[];const arr=all.filter(r=>(filter==='all'||String(r.companyId)===String(filter)) && `${r.phone} ${r.customerName||''} ${r.carrier||''} ${r.packageName||''}`.toLowerCase().includes(q));const count=document.getElementById('renewalImportCount');if(count)count.textContent=all.length;
+  list.innerHTML=arr.slice(0,500).map(r=>{const diff=renewalDiff(r.endDate);const company=companyName(r.companyId);const badge=diff===null?'غير محدد':diff<0?'منتهية':diff===0?'اليوم':diff===1?'غدًا':'بعد '+diff+' يوم';const cls=diff!==null&&diff<=7?'danger-text':diff!==null&&diff<=15?'status-warn':'success-text';return `<div class="company"><div class="company-head"><div><b>📱 ${esc(r.phone)}</b><div class="company-meta">👤 ${esc(r.customerName||'غير مسمى')} · 🏢 ${esc(company)}</div></div><span class="pill ${cls}">${esc(badge)}</span></div><div class="company-bottom" style="margin-top:8px"><span>📅 ${esc(r.endDate||'غير محدد')}</span><span>📦 ${esc(r.packageName||'')}</span></div></div>`;}).join('')||'<div class="empty">لا توجد أرقام مستردة مطابقة</div>';
+}
+function openRenewalAlerts(){tab('toolsTab',document.querySelectorAll('.tab')[10]);setTimeout(()=>{document.getElementById('renewalAlerts')?.scrollIntoView({behavior:'smooth'});renderRenewalAlerts()},30)}
+function fillRenewalMessage(t,r,diff){return String(t||'').replaceAll('{name}',r.customerName||'').replaceAll('{phone}',r.phone||'').replaceAll('{date}',r.endDate||'').replaceAll('{days}',diff===null?'':String(Math.max(diff,0))).replaceAll('{company}',companyName(r.companyId));}
+function whatsappPhone(phone){let x=normalizeRenewalPhone(phone);if(x.startsWith('05'))return '972'+x.slice(1);return x.replace(/^\+/,'');}
+function sendRenewalWhatsApp(encoded){const r=(data.renewalImports||[]).find(x=>normalizeRenewalPhone(x.phone)===decodeURIComponent(encoded));if(!r)return;const diff=renewalDiff(r.endDate);const msg=fillRenewalMessage(document.getElementById('renewalAlertMessage')?.value,r,diff);window.open(`https://wa.me/${whatsappPhone(r.phone)}?text=${encodeURIComponent(msg)}`,'_blank');}
+function renderRenewalAlerts(){
+  const list=document.getElementById('renewalAlertsList');if(!list)return;const filter=document.getElementById('alertCompany')?.value||'all';const w=document.getElementById('alertWindow')?.value||'7';const all=(data.renewalImports||[]).filter(r=>filter==='all'||String(r.companyId)===String(filter));const arr=all.filter(r=>{const d=renewalDiff(r.endDate);return d!==null&&d>=0&&(w==='all'||d<=Number(w));}).sort((a,b)=>renewalDiff(a.endDate)-renewalDiff(b.endDate));const count=document.getElementById('renewalAlertCount');if(count)count.textContent=arr.length;list.innerHTML=arr.slice(0,500).map(r=>{const d=renewalDiff(r.endDate);return `<div class="company"><div class="company-head"><div><b>📱 ${esc(r.phone)}</b><div class="company-meta">👤 ${esc(r.customerName||'غير مسمى')} · 🏢 ${esc(companyName(r.companyId))}</div></div><span class="pill ${d<=3?'danger-text':'status-warn'}">${d===0?'اليوم':d===1?'غدًا':'بعد '+d+' يوم'}</span></div><div class="company-bottom" style="margin-top:8px"><span>📅 ${esc(r.endDate)}</span><span>${esc(r.packageName||'')}</span></div><div style="display:flex;gap:7px;margin-top:10px"><button class="btn success" style="padding:8px 12px" onclick="sendRenewalWhatsApp('${encodeURIComponent(r.phone)}')">💬 إرسال واتساب</button><button class="btn light" style="padding:8px 12px" onclick="navigator.clipboard?.writeText('${esc(r.phone)}')">📋 نسخ الرقم</button></div></div>`;}).join('')||'<div class="empty">لا توجد أرقام تنتهي ضمن الفترة المحددة</div>';
+}
+
+function populateRenewalCompanySelects(){
+  const companies=Array.isArray(data.companies)?data.companies:[];
+  const build=(select,allLabel)=>{
+    if(!select)return;
+    const current=select.value;
+    const isAll=allLabel!==null;
+    select.innerHTML=(isAll?`<option value="all">${esc(allLabel)}</option>`:'')+companies.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+    if([...select.options].some(o=>o.value===current)) select.value=current;
+    else if(isAll) select.value='all';
+    else if(companies[0]) select.value=String(companies[0].id);
+  };
+  build(document.getElementById('renewalImportCompany'),null);
+  build(document.getElementById('renewalImportFilter'),'كل الشركات');
+  build(document.getElementById('alertCompany'),'كل الشركات');
+}
+function normalizeRenewalImports(){data.renewalImports=Array.isArray(data.renewalImports)?data.renewalImports:[];if((data.skyRenewals||[]).length){const skyId=data.companies.find(c=>c.name==='سكاي')?.id||1;const existing=new Set(data.renewalImports.map(r=>`${r.companyId||0}|${normalizeRenewalPhone(r.phone)}`));(data.skyRenewals||[]).forEach(r=>{const phone=normalizeRenewalPhone(r.phone);if(!phone)return;const key=`${skyId}|${phone}`;if(!existing.has(key)){data.renewalImports.push({...r,phone,companyId:skyId});existing.add(key);}});data.skyRenewals=[];localStorage.setItem(KEY,JSON.stringify(data));}}
+function renderAll(){if(document.getElementById('currentUserBadge'))document.getElementById('currentUserBadge').textContent='👤 '+currentUser().name;populateCompanies();populateRenewalCompanySelects();normalizeRenewalImports();renderDashboard();renderSims();renderReport();renderCompanies();renderRenewals();renderGlobalSearch();renderRenewalImports();renderRenewalAlerts();loadSettings();renderDaily();if(document.getElementById('customers'))renderCustomers();}
+renderAll(); setTimeout(checkAutoLock,120);
+</script>
+</body>
+</html>
