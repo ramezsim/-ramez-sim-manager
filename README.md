@@ -1,2 +1,2 @@
-# -ramez-sim-manager
+# ramez-sim-manager
     Ramez SIM Manager
