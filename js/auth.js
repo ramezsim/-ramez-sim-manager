@@ -54,6 +54,7 @@ async function cloudSignIn(){
   const label=btn?.innerHTML;
   if(btn){btn.disabled=true;btn.textContent='⏳ جاري تسجيل الدخول...';}
   try{
+    await migrateLegacyLocalCopies();   // free localStorage before the session is saved
     await Cloud.signIn(email,password,remember);
     if(passEl) passEl.value='';
     await enterApp();
@@ -140,7 +141,16 @@ async function cloudSetUserRole(userId){
   catch(e){alert('تعذر تحديث الصلاحية: '+e.message);}
 }
 
-// ---- legacy local copies written by older versions (plain localStorage) ----
+// ---- legacy local copies written by older versions ----
+// Moved out of localStorage into IndexedDB at startup (LegacyCopies in sync.js), so they can no
+// longer fill the quota that the login session needs. Runs once per page load; login waits for it,
+// but at most 5 s (a stuck IndexedDB must not block the app: the move then finishes in the
+// background and the session meanwhile falls back to sessionStorage).
+let legacyMigration=null;
+function migrateLegacyLocalCopies(){
+  return legacyMigration ||= Promise.race([LegacyCopies.migrate().catch(()=>null), new Promise(r=>setTimeout(r,5000,'timeout'))]);
+}
+
 function canonicalJson(v){
   if(Array.isArray(v)) return '['+v.map(canonicalJson).join(',')+']';
   if(v && typeof v==='object') return '{'+Object.keys(v).sort().map(k=>JSON.stringify(k)+':'+canonicalJson(v[k])).join(',')+'}';
@@ -149,40 +159,41 @@ function canonicalJson(v){
 function legacyHasBusinessData(s){
   return !!s && ((s.sims||[]).length || (s.customerPayments||[]).length || (s.renewalImports||[]).length || (s.debtLedger?.transactions||[]).length);
 }
-let legacyPendingKeys=[];
-function checkLegacyLocalCopies(uid, serverStateJson){
-  legacyPendingKeys=[];
-  for(const k of [KEY+'__user__'+uid, KEY]){
-    let raw=null; try{raw=localStorage.getItem(k);}catch(e){}
-    if(raw===null) continue;
+let legacyPending=[];   // [{id, raw}] copies of this account that differ from the cloud (raw kept so download needs no await)
+async function checkLegacyLocalCopies(uid, serverStateJson){
+  legacyPending=[];
+  const mine=[KEY+'__user__'+uid, KEY];
+  const copies=(await LegacyCopies.list()).filter(c=>mine.includes(c.key)).sort((a,b)=>mine.indexOf(a.key)-mine.indexOf(b.key));
+  for(const {id} of copies){
+    const raw=await LegacyCopies.read(id);
+    if(typeof raw!=='string') continue;
     let parsed=null; try{parsed=JSON.parse(raw);}catch(e){}
     let same=false;
     if(parsed && serverStateJson){
       // compare after the same normalization the app applies to loaded data
       const current=data; try{ data=JSON.parse(raw); normalize(); same=canonicalJson(data)===serverStateJson; }catch(e){} finally{ data=current; }
     }
-    if(!legacyHasBusinessData(parsed) || same){ try{localStorage.removeItem(k);}catch(e){} continue; }
-    legacyPendingKeys.push(k);
+    if(!legacyHasBusinessData(parsed) || same){ await LegacyCopies.remove(id); continue; }
+    legacyPending.push({id, raw});
   }
   renderLegacyBanner();
 }
 function renderLegacyBanner(){
   const el=document.getElementById('legacyBanner'); if(!el) return;
-  if(!legacyPendingKeys.length){el.classList.add('hidden');el.innerHTML='';return;}
+  if(!legacyPending.length){el.classList.add('hidden');el.innerHTML='';return;}
   el.classList.remove('hidden');
   el.innerHTML='📦 <b>توجد على هذا الجهاز نسخة محلية قديمة من البيانات</b> (من الإصدار السابق) تختلف عن نسختك في السحابة. نزّلها كملف للاحتفاظ بها، ثم احذفها من الجهاز.<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn light" data-action="legacyDownload">⬇️ تنزيلها كملف</button><button class="btn danger" data-action="legacyDelete">🗑️ حذفها من الجهاز</button></div>';
 }
 function legacyDownload(){
-  legacyPendingKeys.forEach((k,i)=>{
-    let raw=''; try{raw=localStorage.getItem(k)||'';}catch(e){}
+  legacyPending.forEach(({raw},i)=>{
     const blob=new Blob([raw],{type:'application/json'}),a=document.createElement('a');
     a.href=URL.createObjectURL(blob);a.download='ramez-sim-old-local-copy'+(i?'-'+i:'')+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   });
 }
-function legacyDelete(){
+async function legacyDelete(){
   if(!confirm('حذف النسخة المحلية القديمة من هذا الجهاز؟ تأكد أنك نزّلتها إذا كنت تحتاجها.'))return;
-  legacyPendingKeys.forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
-  legacyPendingKeys=[]; renderLegacyBanner(); notify('🗑️ تم حذف النسخة المحلية القديمة');
+  for(const {id} of legacyPending) await LegacyCopies.remove(id);
+  legacyPending=[]; renderLegacyBanner(); notify('🗑️ تم حذف النسخة المحلية القديمة');
 }
 
 // ---- enter / leave the app ----
@@ -200,12 +211,18 @@ async function enterApp(){
     return;
   }
   cloudGate(false);
-  if(mode==='server') checkLegacyLocalCopies(Auth.user.id, canonicalJson(data));
+  if(mode==='server'){ try{ await checkLegacyLocalCopies(Auth.user.id, canonicalJson(data)); }catch(e){ console.warn('legacy copy check failed: '+(e?.name||'error')); } }
   await cloudLoadSharedCompanies();
   applyTheme();
   goHome();
   applyRolePermissions();
   Idle.start();
+  warnIfSessionNotSaved();
+}
+// "تذكرني" falls back to this tab's sessionStorage when localStorage is full or blocked (supabase.js).
+function warnIfSessionNotSaved(){
+  if(Cloud.storage==='memory') notify('⚠️ تعذر حفظ جلسة الدخول في المتصفح: ستحتاج لتسجيل الدخول من جديد بعد تحديث الصفحة.');
+  else if(Cloud.storage==='session' && Cloud.session?.remember) notify('⚠️ ذاكرة المتصفح ممتلئة: «تذكرني» يعمل في هذه النافذة فقط حتى إغلاقها.');
 }
 
 // Removes everything this app stored locally for the account.
@@ -214,6 +231,7 @@ async function clearLocalUserData(uid){
     Object.keys(localStorage).filter(k=>k.startsWith(KEY)||k==='ramez_sim_last_unlock').forEach(k=>localStorage.removeItem(k));
   }catch(e){}
   try{ sessionStorage.clear(); }catch(e){}
+  try{ await LegacyCopies.clear(); }catch(e){}
   if(uid) await Sync.clearCache(uid);
 }
 
@@ -223,7 +241,7 @@ async function cloudSignOut(opts={}){
     const ok=await Sync.flushNow();
     if(!ok && !confirm('توجد تغييرات لم تُرفع إلى السحابة بعد (لا يوجد اتصال أو يوجد تعارض) وستضيع عند تسجيل الخروج.\nهل تريد تسجيل الخروج على أي حال؟')) return;
   }
-  if(!opts.force && legacyPendingKeys.length && !confirm('النسخة المحلية القديمة على هذا الجهاز لم يتم تنزيلها وسيتم حذفها. متابعة؟')) return;
+  if(!opts.force && legacyPending.length && !confirm('النسخة المحلية القديمة على هذا الجهاز لم يتم تنزيلها وسيتم حذفها. متابعة؟')) return;
   Sync.stop(); Idle.stop();
   try{ if(Cloud.session) await Cloud.signOutRemote(); }catch(e){}
   Cloud.clearSession();
@@ -286,6 +304,8 @@ async function initAuth(){
   let reason=null; try{reason=sessionStorage.getItem(LOGOUT_REASON_KEY);sessionStorage.removeItem(LOGOUT_REASON_KEY);}catch(e){}
 
   const link=consumeAuthLinkFromUrl();
+  // Old versions could fill localStorage completely; move their copies out before any session is saved.
+  await migrateLegacyLocalCopies();
   if(link?.error){cloudGate(true);showLoginView();cloudAuthMessage('رابط البريد غير صالح أو انتهت صلاحيته. اطلب رابطًا جديدًا من «نسيت كلمة المرور؟».');return;}
   if(link?.session?.access_token){
     Cloud.setSession(link.session,false);          // link sessions are never "remembered"

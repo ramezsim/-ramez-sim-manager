@@ -2,7 +2,8 @@
 /* Thin Supabase REST/Auth client (no SDK).
    Session handling:
    - Only access/refresh tokens + user id/email are stored, never the password.
-   - "تذكرني" ON  -> localStorage (survives closing the browser)
+   - "تذكرني" ON  -> localStorage (survives closing the browser); if localStorage is
+     full or blocked -> sessionStorage of this tab (survives reloads, not closing it)
      "تذكرني" OFF -> sessionStorage (gone when the tab/browser closes)
    - Access tokens are refreshed automatically before expiry and on 401. */
 const Cloud = (() => {
@@ -11,6 +12,7 @@ const Cloud = (() => {
   const SESSION_KEY = 'ramez_supabase_session_v1';
   let session = null;
   let refreshing = null;
+  let storedIn = null;   // where the session is saved: 'local' | 'session' | 'memory' (auth.js warns if not as chosen)
 
   function configured(){ return !!(BASE && KEY && /^https:\/\/[a-z0-9-]+\.supabase\.co$|^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(BASE)); }
 
@@ -26,30 +28,49 @@ const Cloud = (() => {
       remember: !!remember
     };
   }
+  const store = (name) => { try{ return name === 'local' ? window.localStorage : window.sessionStorage; }catch(e){ return null; } };
   function persist(){
-    try{
-      if(!session){ localStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(SESSION_KEY); return; }
-      // Write the chosen store first and only then clear the other one, so other
-      // tabs never see a "session removed" event during a normal token refresh.
-      const keep = session.remember ? localStorage : sessionStorage;
-      const drop = session.remember ? sessionStorage : localStorage;
-      keep.setItem(SESSION_KEY, JSON.stringify(session));
-      drop.removeItem(SESSION_KEY);
-    }catch(e){ console.warn('session storage unavailable', e); }
+    if(!session){
+      for(const name of ['local', 'session']){ try{ store(name).removeItem(SESSION_KEY); }catch(e){} }
+      storedIn = null; return;
+    }
+    const json = JSON.stringify(session);
+    const preferred = session.remember ? 'local' : 'session';
+    // "Remember me" prefers localStorage. If it is full (QuotaExceededError) or blocked, the
+    // session falls back to sessionStorage (survives reloads of this tab) instead of being lost.
+    for(const name of session.remember ? ['local', 'session'] : ['session']){
+      try{
+        store(name).setItem(SESSION_KEY, json);
+        // Clear the other copy only after a successful write to the preferred store, so other
+        // tabs never see a "session removed" event during a token refresh or a fallback.
+        if(name === preferred){ try{ store(name === 'local' ? 'session' : 'local').removeItem(SESSION_KEY); }catch(e){} }
+        storedIn = name;
+        return;
+      }catch(e){
+        console.warn('session not saved to ' + name + 'Storage: ' + (e?.name || 'error'));   // never log the session itself
+      }
+    }
+    storedIn = 'memory';
+    console.warn('session kept in memory only: browser storage unavailable');
   }
   function setSession(s, remember){ session = shape(s, remember ?? session?.remember); persist(); return session; }
   function setUser(u){ if(session && u?.id){ session.user = {id:u.id, email:u.email||''}; persist(); } }
   function loadStored(){
-    try{
-      const raw = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
-      const s = raw ? JSON.parse(raw) : null;
-      session = s?.access_token ? s : null;
-    }catch(e){ session = null; }
+    session = null; storedIn = null;
+    // sessionStorage first: it holds the newest copy when a remembered session had to fall back to it.
+    for(const name of ['session', 'local']){
+      try{
+        const raw = store(name).getItem(SESSION_KEY);
+        const s = raw ? JSON.parse(raw) : null;
+        if(s?.access_token){ session = s; storedIn = name; break; }
+      }catch(e){}
+    }
     return session;
   }
   function clearSession(){
-    session = null;
-    try{ localStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(SESSION_KEY); }catch(e){}
+    session = null; storedIn = null;
+    try{ localStorage.removeItem(SESSION_KEY); }catch(e){}
+    try{ sessionStorage.removeItem(SESSION_KEY); }catch(e){}
   }
 
   function netError(e){ const err = new Error('NETWORK'); err.network = true; err.cause = e; return err; }
@@ -103,6 +124,7 @@ const Cloud = (() => {
     configured, loadStored, setSession, setUser, clearSession,
     get session(){ return session; },
     get user(){ return session?.user || null; },
+    get storage(){ return storedIn; },
     request,
     signIn: async (email, password, remember) => {
       const s = await request('/auth/v1/token?grant_type=password', {method:'POST', auth:false, body: JSON.stringify({email, password})});

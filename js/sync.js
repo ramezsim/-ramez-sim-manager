@@ -26,21 +26,88 @@ const Cache = (() => {
     }).catch(e => { dbp = null; throw e; });
     return dbp;
   }
-  async function tx(mode, fn){
+  async function tx(mode, fn, durability){
     const db = await open();
     return new Promise((resolve, reject) => {
-      const t = db.transaction(STORE, mode), s = t.objectStore(STORE);
+      const t = durability ? db.transaction(STORE, mode, {durability}) : db.transaction(STORE, mode), s = t.objectStore(STORE);
       const req = fn(s);
       t.oncomplete = () => resolve(req?.result);
       t.onerror = () => reject(t.error);
       t.onabort = () => reject(t.error);
     });
   }
+  // Stores v under `base` (or base#1, base#2, ... when a different value is already there),
+  // never overwriting another value. Check + write happen in one transaction; 'strict'
+  // durability means the data is on disk when it resolves. Resolves with the key used.
+  async function stash(base, v){
+    let used = null;
+    await tx('readwrite', s => {
+      const attempt = (n) => {
+        const k = n ? base + '#' + n : base, g = s.get(k);
+        g.onsuccess = () => {
+          if(g.result === undefined){ s.put(v, k); used = k; }
+          else if(g.result === v) used = k;
+          else attempt(n + 1);
+        };
+      };
+      attempt(0);
+    }, 'strict');
+    return used;
+  }
   return {
     get: async (k) => { try{ return await tx('readonly', s => s.get(k)); }catch(e){ return null; } },
     set: async (k, v) => { try{ await tx('readwrite', s => s.put(v, k)); return true; }catch(e){ console.warn('cache write failed', e); return false; } },
-    del: async (k) => { try{ await tx('readwrite', s => s.delete(k)); }catch(e){} }
+    del: async (k) => { try{ await tx('readwrite', s => s.delete(k)); }catch(e){} },
+    keys: async () => { try{ return (await tx('readonly', s => s.getAllKeys())) || []; }catch(e){ return []; } },
+    stash: async (base, v) => { try{ return await stash(base, v); }catch(e){ console.warn('cache write failed: ' + (e?.name || 'error')); return null; } }
   };
+})();
+
+/* Local copies left by older versions, which kept the whole state in localStorage under
+   ramez_sim_manager_v2 / ramez_sim_manager_v2__user__<uid>. They can fill the browser's
+   localStorage quota, and then the login session cannot be saved (a reload shows the login
+   screen again). On every start they are moved byte-for-byte to IndexedDB; the localStorage
+   entry is removed only after the IndexedDB copy has been read back and found identical.
+   Their lifetime is unchanged: compared with the cloud copy after login (auth.js), offered
+   for download, and deleted on logout. Entries that could not be moved (no IndexedDB)
+   stay in localStorage and are still handled from there. */
+const LegacyCopies = (() => {
+  const PREFIX = 'legacy:';
+  const fromIdb = (id) => id.startsWith(PREFIX);
+  const lsKeys = () => { try{ return Object.keys(localStorage).filter(k => k.startsWith(KEY)); }catch(e){ return []; } };
+  const lsGet = (k) => { try{ return localStorage.getItem(k); }catch(e){ return null; } };
+
+  async function migrate(){
+    const result = {moved:0, kept:0};
+    for(const k of lsKeys()){
+      const raw = lsGet(k);
+      if(raw === null) continue;
+      const id = await Cache.stash(PREFIX + k, raw);
+      const verified = !!id && (await Cache.get(id)) === raw;
+      // Remove only what was verified; if another (old) tab rewrote the entry meanwhile, keep it for the next start.
+      if(verified && lsGet(k) === raw){
+        try{ localStorage.removeItem(k); result.moved++; continue; }catch(e){}
+      }
+      result.kept++;
+    }
+    if(result.kept) console.warn('legacy local copies left in localStorage: ' + result.kept);   // counts only, never data
+    return result;
+  }
+  // [{id, key}] - id: where the copy is now (IndexedDB key, or the localStorage key if not moved); key: its original localStorage key.
+  async function list(){
+    const out = [];
+    for(const id of await Cache.keys()) if(typeof id === 'string' && fromIdb(id)) out.push({id, key: id.slice(PREFIX.length).replace(/#\d+$/, '')});
+    for(const k of lsKeys()) out.push({id: k, key: k});
+    return out;
+  }
+  const read = async (id) => fromIdb(id) ? Cache.get(id) : lsGet(id);
+  async function remove(id){
+    if(fromIdb(id)) return Cache.del(id);
+    try{ localStorage.removeItem(id); }catch(e){}
+  }
+  async function clear(){ for(const {id} of await list()) await remove(id); }
+
+  return { migrate, list, read, remove, clear };
 })();
 
 const Sync = (() => {
