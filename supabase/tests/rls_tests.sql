@@ -73,6 +73,14 @@ begin
   insert into _r(name, ok, got) select 'anon cannot call admin_set_user_role', v like 'ERR:%', v
     from (select rls_tmp.exec_as('anon', null,
       format('select public.admin_set_user_role(%L::uuid, %L)::text', a, 'admin')) v) s;
+  insert into _r(name, ok, got)
+    select 'anon cannot call any SECURITY DEFINER function in public', v = 'OK:0', v
+    from (select 'OK:' || count(*) v from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'EXECUTE')) s;
+  insert into _r(name, ok, got)
+    select 'only one admin_set_user_role exists (old overloads removed)', v = 'OK:1', v
+    from (select 'OK:' || count(*) v from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+          where n.nspname = 'public' and p.proname = 'admin_set_user_role') s;
 
   -- ---------- user A vs user B : user_app_state ----------
   insert into _r(name, ok, got) select 'A sees exactly one state row (its own)', v = 'OK:1', v
@@ -86,6 +94,9 @@ begin
   insert into _r(name, ok, got) select 'A cannot delete B state', v in ('OK:0') or v like 'ERR:%', v
     from (select rls_tmp.exec_as('authenticated', a,
       format('with x as (delete from public.user_app_state where owner_id = %L returning 1) select count(*)::text from x', b)) v) s;
+  insert into _r(name, ok, got) select 'A cannot delete even its own state row directly', v like 'ERR:%' or v = 'OK:0', v
+    from (select rls_tmp.exec_as('authenticated', a,
+      format('with x as (delete from public.user_app_state where owner_id = %L returning 1) select count(*)::text from x', a)) v) s;
   insert into _r(name, ok, got) select 'A cannot insert a row owned by B', v like 'ERR:%', v
     from (select rls_tmp.exec_as('authenticated', a,
       format($q$with x as (insert into public.user_app_state(owner_id, state) values (%L, '{}') returning 1) select count(*)::text from x$q$, b)) v) s;

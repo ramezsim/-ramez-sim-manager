@@ -10,14 +10,18 @@
 --   1. RLS on every table in "public"; anon gets no table access at all.
 --   2. profiles      : read own row (admins read all); NO client writes;
 --                      role changes only through admin_set_user_role().
---   3. user_app_state: strictly auth.uid() = owner_id for select/insert/update/delete,
---                      owner_id immutable, revision column + save_app_state() RPC
---                      with optimistic-concurrency (conflict detection).
+--   3. user_app_state: strictly auth.uid() = owner_id for select/insert/update
+--                      (no DELETE privilege), owner_id immutable, revision column +
+--                      save_app_state() RPC with optimistic-concurrency (conflicts).
 --   4. companies     : shared catalogue, read by signed-in users, written by admins only,
 --                      logo must be a base64 raster data URL.
 --   5. app_state     : legacy single-row shared state -> locked (data kept).
---   6. Functions     : no EXECUTE for anon; hardened admin_set_user_role().
+--   6. Functions     : anon cannot execute SECURITY DEFINER functions in public;
+--                      every old admin_set_user_role() is replaced by a hardened one.
+--   Side effect: functions created later in "public" are not executable by
+--   anon/authenticated until you GRANT EXECUTE explicitly (secure default).
 --
+-- All-or-nothing: wrapped in one transaction; any error rolls back everything.
 -- Idempotent: running it twice is harmless. Customer data is never deleted.
 -- =====================================================================
 begin;
@@ -162,7 +166,18 @@ end $$;
 
 -- Hardened role management: server-side admin check, valid roles only,
 -- the last admin can never be demoted.
-drop function if exists public.admin_set_user_role(uuid, text);
+-- Replace every previous version of admin_set_user_role (whatever its argument
+-- types were) so no weaker overload stays callable.
+do $$
+declare r record;
+begin
+  for r in select p.oid::regprocedure::text as sig from pg_proc p
+           join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.proname = 'admin_set_user_role' loop
+    execute format('drop function %s', r.sig);
+    raise notice 'replaced old function: %', r.sig;
+  end loop;
+end $$;
 create function public.admin_set_user_role(target_user_id uuid, new_role text)
 returns void
 language plpgsql
@@ -202,20 +217,36 @@ create table if not exists public.user_app_state (
   updated_by uuid,
   updated_at timestamptz not null default now()
 );
+-- Safety check: the isolation rules below need owner_id to be a unique uuid.
+-- If the real table differs, stop here (the whole file is rolled back).
+do $$ begin
+  if (select format_type(a.atttypid, a.atttypmod) from pg_attribute a
+      where a.attrelid = 'public.user_app_state'::regclass and a.attname = 'owner_id' and not a.attisdropped) is distinct from 'uuid' then
+    raise exception 'user_app_state.owner_id must be of type uuid — migration aborted, nothing was changed';
+  end if;
+  if not exists (
+    select 1 from pg_index i
+    where i.indrelid = 'public.user_app_state'::regclass and i.indisunique and i.indnkeyatts = 1
+      and i.indkey[0] = (select attnum from pg_attribute where attrelid = 'public.user_app_state'::regclass and attname = 'owner_id')
+  ) then
+    raise exception 'user_app_state.owner_id must be unique (primary key) — migration aborted, nothing was changed';
+  end if;
+end $$;
+
 alter table public.user_app_state add column if not exists revision bigint not null default 0;
 alter table public.user_app_state add column if not exists updated_by uuid;
 alter table public.user_app_state add column if not exists updated_at timestamptz default now();
 alter table public.user_app_state enable row level security;
 
 revoke all on public.user_app_state from anon, authenticated;
--- Direct writes stay possible (owner-only) until part 2 is applied, so the
--- currently deployed frontend keeps working during the switch. Re-running
--- this file after part 2 keeps the RPC-only lock.
+-- Direct writes stay possible (owner-only, no DELETE) until part 2 is applied,
+-- so the currently deployed frontend keeps working during the switch.
+-- Re-running this file after part 2 keeps the RPC-only lock.
 do $$ begin
   if coalesce(obj_description('public.user_app_state'::regclass, 'pg_class'), '') like '%rpc-only-writes%' then
     grant select on public.user_app_state to authenticated;
   else
-    grant select, insert, update, delete on public.user_app_state to authenticated;
+    grant select, insert, update on public.user_app_state to authenticated;
   end if;
 end $$;
 
@@ -372,14 +403,17 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------
--- 6. Functions: nothing in "public" is executable by anon.
+-- 6. Functions: anon cannot call any SECURITY DEFINER function in "public"
+--    (those are the ones that bypass RLS). Extension functions are skipped.
 -- ---------------------------------------------------------------------
 do $$
 declare r record;
 begin
   for r in select p.oid::regprocedure as sig from pg_proc p
            join pg_namespace n on n.oid = p.pronamespace
-           where n.nspname = 'public' and p.prokind = 'f' loop
+           where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
+             and not exists (select 1 from pg_depend d
+                             where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e') loop
     execute format('revoke execute on function %s from public, anon', r.sig);
     execute format('grant execute on function %s to authenticated, service_role', r.sig);
   end loop;

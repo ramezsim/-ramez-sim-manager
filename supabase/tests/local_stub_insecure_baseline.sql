@@ -52,6 +52,15 @@ language plpgsql security definer as $$
 begin
   update public.profiles set role = new_role where id = target_user_id;   -- no caller check!
 end $$;
+-- a second, older overload with different argument types (must also disappear)
+create function public.admin_set_user_role(target_user_id text, new_role text) returns void
+language plpgsql security definer as $$
+begin
+  update public.profiles set role = new_role where id = target_user_id::uuid;
+end $$;
+-- an unknown SECURITY DEFINER helper that leaks data (anon must lose access)
+create function public.debug_count_states() returns bigint
+language sql security definer as $$ select count(*) from public.user_app_state $$;
 
 -- ---------- seed ----------
 insert into auth.users values
