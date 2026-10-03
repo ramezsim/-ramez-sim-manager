@@ -16,12 +16,12 @@ section.hidden,.hidden{display:none!important}.formgrid{display:grid;grid-templa
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#182235;color:#fff;padding:12px 18px;border-radius:12px;z-index:100;display:none}
 @media(max-width:760px){.cards{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}.title{display:block}.period{margin-top:10px}.tabs{display:flex;overflow-x:auto}.tab{font-size:11px;min-width:88px}.formgrid{grid-template-columns:1fr}.full{grid-column:auto}}
 
-@font-face{font-family:'Graphology';src:url('fonts/Graphology-Light.otf') format('opentype');font-weight:300;font-style:normal;font-display:swap}
-@font-face{font-family:'Graphology';src:url('fonts/Graphology-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:'Graphology';src:url('fonts/Graphology-Medium.otf') format('opentype');font-weight:500;font-style:normal;font-display:swap}
-@font-face{font-family:'Graphology';src:url('fonts/Graphology-SemiBold.otf') format('opentype');font-weight:600;font-style:normal;font-display:swap}
-@font-face{font-family:'Graphology';src:url('fonts/Graphology-Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap}
-@font-face{font-family:'Graphology';src:url('fonts/Graphology-ExtraBold.otf') format('opentype');font-weight:800 900;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('../fonts/Graphology-Light.otf') format('opentype');font-weight:300;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('../fonts/Graphology-Regular.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('../fonts/Graphology-Medium.otf') format('opentype');font-weight:500;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('../fonts/Graphology-SemiBold.otf') format('opentype');font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('../fonts/Graphology-Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:'Graphology';src:url('../fonts/Graphology-ExtraBold.otf') format('opentype');font-weight:800 900;font-style:normal;font-display:swap}
 
 
 /* Advanced manager additions */

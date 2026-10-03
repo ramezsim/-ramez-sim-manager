@@ -5,6 +5,7 @@
 -- statement that always ends with an error carrying the report, so every
 -- temporary user/row it creates is rolled back automatically.
 -- Expected last line of the message:  "RESULT: N passed, 0 failed"
+--   after part 1: N = 38     after part 2: N = 40     after part 3: N = 50
 -- =====================================================================
 do $test$
 declare
@@ -12,10 +13,16 @@ declare
   b   uuid := gen_random_uuid();
   adm uuid := gen_random_uuid();
   nu  uuid := gen_random_uuid();
+  nu2 uuid := gen_random_uuid();
   report text := '';
   passed int := 0;
   failed int := 0;
   phase2 boolean := not has_table_privilege('authenticated', 'public.user_app_state', 'UPDATE');
+  -- part 3 detected by EITHER of its two changes, then ALL its checks must pass
+  phase3 boolean := coalesce((select 'search_path=""' = any(proconfig) from pg_proc
+                              where oid = to_regprocedure('public.handle_new_user()')), false)
+                    or exists (select 1 from pg_class c join pg_namespace n on n.oid = c.relnamespace
+                               where n.nspname = 'private_backup' and c.relkind in ('r','p') and c.relrowsecurity);
   rev bigint;
 
   -- run SQL as a role/user and return 'OK:<value>' or 'ERR:<sqlstate>'
@@ -188,6 +195,49 @@ begin
   insert into auth.users (id, email) values (nu, 'rls-new-' || nu || '@test.invalid');
   insert into _r(name, ok, got) select 'new account gets an employee profile', v = 'OK:employee', v
     from (select 'OK:' || coalesce((select role from public.profiles where id = nu), 'missing') v) s;
+
+  -- ---------- part 2 only: writes go through save_app_state() only ----------
+  if phase2 then
+    insert into _r(name, ok, got) select 'direct INSERT of own state row blocked after part 2', v like 'ERR:%', v
+      from (select rls_tmp.exec_as('authenticated', adm,
+        format($q$with x as (insert into public.user_app_state(owner_id, state) values (%L, '{}') returning 1) select count(*)::text from x$q$, adm)) v) s;
+    insert into _r(name, ok, got) select 'user_app_state marked rpc-only-writes (re-running part 1 keeps the lock)', v = 'OK:true', v
+      from (select 'OK:' || (coalesce(obj_description('public.user_app_state'::regclass, 'pg_class'), '') like '%rpc-only-writes%') v) s;
+  end if;
+
+  -- ---------- part 3 only: sign-up trigger function + backups ----------
+  if phase3 then
+    insert into _r(name, ok, got) select 'handle_new_user: anon/PUBLIC cannot execute', v = 'OK:false', v
+      from (select 'OK:' || has_function_privilege('anon', 'public.handle_new_user()', 'EXECUTE') v) s;
+    insert into _r(name, ok, got) select 'handle_new_user: authenticated cannot execute', v = 'OK:false', v
+      from (select 'OK:' || has_function_privilege('authenticated', 'public.handle_new_user()', 'EXECUTE') v) s;
+    insert into _r(name, ok, got) select 'handle_new_user: sign-up role keeps EXECUTE', v = 'OK:true', v
+      from (select 'OK:' || case when exists (select 1 from pg_roles where rolname = 'supabase_auth_admin')
+                  then has_function_privilege('supabase_auth_admin', 'public.handle_new_user()', 'EXECUTE')::text
+                  else 'true' end v) s;
+    insert into _r(name, ok, got) select 'handle_new_user: search_path pinned to empty', v = 'OK:true', v
+      from (select 'OK:' || coalesce((select 'search_path=""' = any(proconfig) from pg_proc
+                                      where oid = 'public.handle_new_user()'::regprocedure), false) v) s;
+    insert into _r(name, ok, got) select 'on_auth_user_created still calls public.handle_new_user', v = 'OK:1', v
+      from (select 'OK:' || count(*) v from pg_trigger
+            where tgrelid = 'auth.users'::regclass and tgname = 'on_auth_user_created'
+              and tgfoid = 'public.handle_new_user()'::regprocedure and tgenabled <> 'D') s;
+    insert into auth.users (id, email, raw_user_meta_data)
+      values (nu2, 'rls-new2-' || nu2 || '@test.invalid', '{"full_name":"RLS Test Name"}');
+    insert into _r(name, ok, got) select 'sign-up still copies full_name from metadata', v = 'OK:employee/RLS Test Name', v
+      from (select 'OK:' || coalesce((select role || '/' || coalesce(full_name, '<null>') from public.profiles where id = nu2), 'missing') v) s;
+    insert into _r(name, ok, got) select 'private_backup: every backup table has RLS enabled', v = 'OK:0', v
+      from (select 'OK:' || count(*) v from pg_class c join pg_namespace n on n.oid = c.relnamespace
+            where n.nspname = 'private_backup' and c.relkind in ('r','p') and not c.relrowsecurity) s;
+    if to_regclass('private_backup.user_app_state_20261003') is not null then
+      insert into _r(name, ok, got) select 'private_backup: owner still reads the backup', v <> 'OK:0', v
+        from (select 'OK:' || count(*) v from private_backup.user_app_state_20261003) s;
+      insert into _r(name, ok, got) select 'private_backup: anon cannot read backups', v like 'ERR:%', v
+        from (select rls_tmp.exec_as('anon', null, 'select count(*)::text from private_backup.user_app_state_20261003') v) s;
+      insert into _r(name, ok, got) select 'private_backup: service_role cannot read backups', v like 'ERR:%', v
+        from (select rls_tmp.exec_as('service_role', a, 'select count(*)::text from private_backup.user_app_state_20261003') v) s;
+    end if;
+  end if;
 
   select count(*) filter (where ok), count(*) filter (where not ok) into passed, failed from _r;
   select string_agg(case when ok then 'PASS  ' else 'FAIL  ' end || name || '   [' || got || ']', E'\n' order by n)

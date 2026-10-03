@@ -10,10 +10,11 @@
 
 ## ترتيب النشر (مهم)
 1. **Supabase → SQL Editor**: شغّل `supabase/migrations/20261003_01_security_hardening.sql` (آمن مع النسخة الحالية ويأخذ نسخة احتياطية داخل schema `private_backup`).
-2. شغّل `supabase/tests/rls_tests.sql` — يجب أن تنتهي الرسالة بـ `RESULT: N passed, 0 failed` (كل ما ينشئه يُلغى تلقائيًا).
+2. شغّل `supabase/tests/rls_tests.sql` — يجب أن تنتهي الرسالة بـ `RESULT: 38 passed, 0 failed` (كل ما ينشئه يُلغى تلقائيًا).
 3. انشر الواجهة الجديدة (push إلى GitHub Pages أو Cloudflare Pages).
 4. اطلب من كل الموظفين إغلاق الصفحة القديمة أو تحديثها على كل الأجهزة.
-5. شغّل `supabase/migrations/20261003_02_lock_direct_state_writes.sql` ثم أعد تشغيل `rls_tests.sql`.
+5. شغّل `supabase/migrations/20261003_02_lock_direct_state_writes.sql` (يقفل الكتابة المباشرة؛ الحفظ عبر `save_app_state()` فقط) ثم `rls_tests.sql` → `40 passed, 0 failed`.
+6. شغّل `supabase/migrations/20261003_03_harden_signup_trigger_and_backups.sql` (RLS على جداول `private_backup` + تقوية `handle_new_user()` بدون تغيير منطق إنشاء الحسابات؛ يختبر نفسه ويُلغى بالكامل إن فشل أي فحص) ثم `rls_tests.sql` → `50 passed, 0 failed`.
 
 ## إعدادات يدوية في لوحة Supabase
 - Authentication → Sign In / Providers → **Allow new users to sign up = OFF** (إغلاق التسجيل العام).
