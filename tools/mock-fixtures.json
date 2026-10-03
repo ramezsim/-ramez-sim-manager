@@ -1,0 +1,26 @@
+{
+  "note": "LOCAL MOCK ONLY - fake accounts for tools/dev-server.mjs. Not real credentials.",
+  "users": [
+    {
+      "id": "aaaaaaaa-0000-4000-8000-00000000000a",
+      "email": "employee.a@mock.test",
+      "password": "2W9q9IJf6mo47a",
+      "role": "employee",
+      "full_name": "موظف أ"
+    },
+    {
+      "id": "bbbbbbbb-0000-4000-8000-00000000000b",
+      "email": "employee.b@mock.test",
+      "password": "ScXL1Jq5faPI7a",
+      "role": "employee",
+      "full_name": "موظف ب"
+    },
+    {
+      "id": "cccccccc-0000-4000-8000-00000000000c",
+      "email": "admin@mock.test",
+      "password": "T4EbE6rwObCa7a",
+      "role": "admin",
+      "full_name": "المدير"
+    }
+  ]
+}

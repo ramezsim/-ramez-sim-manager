@@ -1,0 +1,18 @@
+# Real HTTP security headers. Used by Cloudflare Pages (and Netlify).
+# GitHub Pages ignores this file; there the CSP comes from the <meta> tag in index.html,
+# but frame-ancestors / X-Frame-Options / HSTS cannot be set on GitHub Pages.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://yoszxazetkbuxdrxffje.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Cache-Control: no-cache
+
+/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/tools/*
+  X-Robots-Tag: noindex
