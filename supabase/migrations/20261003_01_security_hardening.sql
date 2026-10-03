@@ -149,10 +149,16 @@ begin
 end;
 $$;
 revoke all on function private.handle_new_user_profile() from public;
-drop trigger if exists on_auth_user_created_profile on auth.users;
-create trigger on_auth_user_created_profile
-  after insert on auth.users
-  for each row execute function private.handle_new_user_profile();
+-- Only add our trigger when the project has no profile-creating trigger yet
+-- (production already has on_auth_user_created -> public.handle_new_user()).
+do $$ begin
+  if not exists (select 1 from pg_trigger t where t.tgrelid = 'auth.users'::regclass
+                 and not t.tgisinternal and t.tgname <> 'on_auth_user_created_profile') then
+    execute 'drop trigger if exists on_auth_user_created_profile on auth.users';
+    execute 'create trigger on_auth_user_created_profile after insert on auth.users
+             for each row execute function private.handle_new_user_profile()';
+  end if;
+end $$;
 
 -- Backfill missing profiles (role employee).
 do $$ begin
@@ -194,6 +200,9 @@ begin
   if new_role is null or new_role not in ('employee','manager','admin') then
     raise exception 'invalid role' using errcode = '22023';
   end if;
+  if target_user_id = v_caller and new_role <> 'admin' then
+    raise exception 'cannot demote yourself' using errcode = '42501';
+  end if;
   select role into v_old from public.profiles where id = target_user_id for update;
   if not found then
     raise exception 'user not found' using errcode = 'P0002';
@@ -203,6 +212,10 @@ begin
     raise exception 'cannot demote the last admin' using errcode = '42501';
   end if;
   update public.profiles set role = new_role where id = target_user_id;
+  -- keep the existing updated_at column (if present) in sync
+  if exists (select 1 from pg_attribute where attrelid = 'public.profiles'::regclass and attname = 'updated_at' and not attisdropped) then
+    execute 'update public.profiles set updated_at = now() where id = $1' using target_user_id;
+  end if;
 end;
 $$;
 revoke all on function public.admin_set_user_role(uuid, text) from public, anon;
@@ -412,6 +425,7 @@ begin
   for r in select p.oid::regprocedure as sig from pg_proc p
            join pg_namespace n on n.oid = p.pronamespace
            where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
+             and p.prorettype <> 'trigger'::regtype            -- trigger functions are not callable via the API
              and not exists (select 1 from pg_depend d
                              where d.classid = 'pg_proc'::regclass and d.objid = p.oid and d.deptype = 'e') loop
     execute format('revoke execute on function %s from public, anon', r.sig);

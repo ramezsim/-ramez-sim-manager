@@ -76,7 +76,8 @@ begin
   insert into _r(name, ok, got)
     select 'anon cannot call any SECURITY DEFINER function in public', v = 'OK:0', v
     from (select 'OK:' || count(*) v from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-          where n.nspname = 'public' and p.prosecdef and has_function_privilege('anon', p.oid, 'EXECUTE')) s;
+          where n.nspname = 'public' and p.prosecdef and p.prorettype <> 'trigger'::regtype
+            and has_function_privilege('anon', p.oid, 'EXECUTE')) s;
   insert into _r(name, ok, got)
     select 'only one admin_set_user_role exists (old overloads removed)', v = 'OK:1', v
     from (select 'OK:' || count(*) v from pg_proc p join pg_namespace n on n.oid = p.pronamespace
